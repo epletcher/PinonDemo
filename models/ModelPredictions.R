@@ -1,7 +1,6 @@
 ## set working directory to 'SEV_PJ_Demo'
 
-# load model fitting workspace
-load("models/growth_surv_model_outputs.RData")
+# load model fitting workspace from 'modelPrepping'
 
 ## load packages
 library(tidyverse)
