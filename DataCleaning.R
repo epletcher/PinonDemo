@@ -3,6 +3,8 @@ library(tidyverse)
 
 raw.data<-read.csv('CirclePlots.csv',header=T)
 
+# ---------- prep 'raw.data' before extracting dmeographic data --------
+
 # filter to pinon only
 raw.data<-raw.data[which(raw.data$Species=='PIED'),]
 # remove years w/ incomplete data
@@ -11,6 +13,16 @@ raw.data<-raw.data[-which(raw.data$Year==2009 | raw.data$Year==2008),]
 # Create a unique ID column
 raw.data$TreeID<-(paste(raw.data$Site,".",raw.data$Transect,".",raw.data$Tree_Tag_Number,".",raw.data$Plot_Distance))
 
+# Create an RCD_sum column
+raw.data <- raw.data %>% 
+  mutate(RCD_sum = rowSums(across(starts_with("RCD")), na.rm = T))
+  
+# for trees with no RCD, we want values to be NA not zero
+raw.data$RCD_sum[raw.data$RCD_sum==0] <- NA
+
+# check that the length of NA's in RCD_1 and RCD_sum match
+length(raw.data$RCD_sum[is.na(raw.data$RCD_sum)]) == length(raw.data$RCD_1[is.na(raw.data$RCD_1)])    
+                              
 # check for year-tree ID duplicates in the unique ID column
 raw.data %>%
   dplyr::group_by(Year, TreeID) %>%
@@ -30,6 +42,7 @@ ntrees<-length(TreeIDs) # number of individuals
 years<-unique(raw.data$Year) # years 
 
 # ------ Create new demo.data data frame ---------
+
 demo.data<-as.data.frame(raw.data$TreeID)
 demo.data$Year<-raw.data$Year
 demo.data$Alive<-NA # empy column to fill survival data
@@ -97,8 +110,30 @@ for (i in 1:ntrees){
 
 # how many recruits?
 length(which(demo.data$newRecruits==1))
+
 # 3 trees are greater than 2 in height -- too tall for a new recruit?
 
+## Explore RCD *** in progress
+
+# how often are trees multi stemmed?
+dim(raw.data[which(raw.data$Multiple_Stems=="Y"),])[1] # column seems to only apply for dbh time period
+
+# how often do trees have atleast one RCD measurement?
+dim(raw.data[which(raw.data$RCD_1>0),])[1]
+
+# how many years do trees have an RCD measurement?
+sort(unique(raw.data[which(raw.data$RCD_1>0),]$Year))
+
+# how often do trees have atleast one DBH measurement?
+dim(raw.data[which(raw.data$DBH_1>0),])[1]
+
+# how many years do trees have a DBH measurement?
+sort(unique(raw.data[which(raw.data$DBH_1>0),]$Year))
+
+# for how many trees does the number of RCD measurements change depending on the year?
+multistem.dat <- raw.data[which(raw.data$RCD_2>0),]
+# need to filter to each tree and see if stems change by year
+multistem.dat %>% select(c())
 
 ## Add annual growth data 
 
@@ -106,7 +141,7 @@ demo.data$Ht<-NA
 demo.data$CanDiam1<-NA
 demo.data$CanDiam2<-NA
 demo.data$DBH<-NA
-
+demo.data$RCDSum<-NA
 
 for (i in 1:length(demo.data[,1])){
   
@@ -121,7 +156,7 @@ for (i in 1:length(demo.data[,1])){
     demo.data$CanDiam1[i]<-raw.data$Greatest_Diameter[rID[1]]
     demo.data$CanDiam2[i]<-raw.data$Perpendicular_Diameter[rID[1]]
     demo.data$DBH[i]<-raw.data$DBH_1[rID[1]]
-    
+    demo.data$RCDSum[i]<-raw.data$RCD_sum[rID[1]]
     
   }
   
@@ -134,6 +169,7 @@ demo.data$Ht.t.min.1 <- NA
 demo.data$CanDiam1.tmin.1 <- NA
 demo.data$CanDiam2.tmin.1 <- NA
 demo.data$DBH.tmin.1 <- NA
+demo.data$RCDSum.tmin.1 <- NA
 
 for (i in 1:ntrees){
   
@@ -162,11 +198,19 @@ for (i in 1:ntrees){
       demo.data$CanDiam1.tmin.1[rID]<-ind.data$CanDiam1[which(ind.data$Year==prev.year)]
       demo.data$CanDiam2.tmin.1[rID]<-ind.data$CanDiam2[which(ind.data$Year==prev.year)]
       demo.data$DBH.tmin.1[rID]<-ind.data$DBH[which(ind.data$Year==prev.year)]
+      demo.data$RCDSum.tmin.1[rID]<-ind.data$RCDSum[which(ind.data$Year==prev.year)]
       
     }
     
   }
 }
+
+# ## Finally, add a column for CanDiamAvg and CanDiamAvg2
+# # Create an RCD_sum column
+# demo.data <- demo.data %>% 
+#   mutate(CanDiamAvg = rowMeans(across(c(CanDiam1, CanDiam2)), na.rm = T)) %>% 
+#   mutate(CanDiamAvg.tmin.1 = rowMeans(across(c(CanDiam1.tmin.1, CanDiam2.tmin.1)), na.rm = T))
+
 
 # ** error is duplicate year for treeID==PJControl . LAI_Right . 3355 . 50 (2017 is duplicated), but all NAs so ignoring
 subset(demo.data, demo.data$`raw.data$TreeID`=='PJControl . LAI_Right . 3355 . 50')
@@ -178,9 +222,9 @@ write.csv(demo.data, "cleaned_demo_data.csv", row.names = FALSE)
 # ----- Exploratory plotting ---------
 
 # plot size t and size t-1
-par(mfrow=c(2,2))
+par(mfrow=c(3,2))
 plot(demo.data$CanDiam1.tmin.1, demo.data$CanDiam1, ylim = c(0,6), xlim = c(0,6))
 plot(demo.data$CanDiam2.tmin.1, demo.data$CanDiam2, ylim = c(0,6), xlim = c(0,6))
 plot(demo.data$Ht.t.min.1, demo.data$Ht, ylim = c(0,7), xlim = c(0,7))
 plot(demo.data$DBH.tmin.1, demo.data$DBH, ylim = c(0,22), xlim = c(0,22))
-
+plot(demo.data$RCDSum.tmin.1, demo.data$RCDSum, ylim = c(0,22), xlim = c(0,22))

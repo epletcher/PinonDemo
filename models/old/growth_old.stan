@@ -1,14 +1,17 @@
 // The input data
 data {
   int<lower=0> i; // individual
-  vector[i] St2; //Response; size at last time step
-  vector[i] St1; // size at first timestep
+  int<lower=0> y; // time / year
+  matrix[y,i] St; //Response size at t
+  matrix[y,i] Stmin; // size at t-1 // size at t-1
+  matrix[y,i] St2; //Response size at last time step
+  matrix[y,i] St1; // size at first timestep
 }
 
 // The parameters accepted by the model. Our model
 parameters {
-  real beta0;
-  real beta1;
+  real beta0[y];
+  real beta1[y];
   real<lower = 0> sigma;
   real beta0mu;
   real beta1mu;
@@ -18,13 +21,22 @@ parameters {
 }
 
 model {
+  
+  //for(t in 1:y) {
+    
+   // log(St[y,]) ~ normal(beta0[y] + beta1[y]*log(Stmin[y,]), sigma);
+   
+ // } 
+ 
+    for(t in 1:y) {
       
       for(j in 1:i) {
         
-        if(St2[j]!=999 && St1[j]!=999) { // in order to skip over NA's
+        if(St[t,j]!=999 && Stmin[t,j]!=999) { // in order to skip over NA's
         
-          log(St2[j]) ~ normal(beta0 + beta1*log(St1[j]), sigma);
+          log(St[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma);
           
+        }
       }
     }
     

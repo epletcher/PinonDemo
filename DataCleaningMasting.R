@@ -4,16 +4,11 @@ library(cowplot)
 ## load masting data
 mast.data <- read.csv("sev204_treemastproduction.csv")
 
-## load dendrometer data 2006-2015
-den.data <- read.csv("Dendrometer_trees_2006-15_with_mast_match.csv")
-
 # Notes from MAST QAQC
 # not all sites began during the same year, but NAs were added (historically) for tree Field_IDs for all years prior to initiation of the study at a site. These NAs should likely be removed before analysis.
 
-# Notes from dendrometer meta data
-# RZ_No - Tag number from another study (Roman Zlotin Mast production dataset)
-# Cur DBH - Current Calculated DBH (cm)
-# DRC..cm. - Initial Diameter at root crown (cm)
+## load height dat for mast trees collected by Dylan Taylor in 2024
+height.data <- read.csv("Mast_PIED_height.csv")
 
 # ------ DATA CLEANING -----------
 
@@ -23,62 +18,54 @@ unique(mast.data$Species)
 # filter data to only pinon species
 mast.pin <- mast.data %>% 
   filter(Species == "PIED") %>%
-  # make age a factor
-  mutate(Age = factor(Age, levels = c("J","Y","M","O","VO"))) %>%
-  select(c(Year, Site, Plot, Subplot, Field_ID, Age, Species, Fruit_Count)) %>%
-  filter(Year > 2005) %>%
+  select(c(Year, Site, Plot, Subplot, Field_ID, Fruit_Count)) %>%
+  unite("Plot_Subplot", c(Plot,Subplot), sep = ".") %>%
+  mutate(Plot_Subplot = as.factor(Plot_Subplot)) %>%
   filter(Field_ID > 0) 
 
-## clean dendro part data
-  # only pinon
-den.pin <- den.data %>%
-  select(c(Date, Species, RZ_No, Cur.DBH)) %>%
-  filter(Species == "PIED") %>%
-  # only trees with rz tag number 
-  filter(RZ_No > 0) %>%
-  # separate out date month year
-  separate(col = Date, into = c('Month', 'Day', 'Year')) %>%
-  # several dbh measurements a year, take the mean
-  group_by(RZ_No,Year) %>%
-  summarize(avg.dbh = mean(Cur.DBH, na.rm = T)) %>%
-  # rename RZ_No Field_ID
-  rename(Field_ID = RZ_No) %>%
-  mutate(Field_ID = as.character(Field_ID)) %>%
-  mutate(Year = as.numeric(Year))
+## filter to only pinon species
+height.pin <- height.data %>%
+  mutate(Plot_Subplot = as.factor(Plot_Subplot)) %>%
+  rename(tree_height_2024 = tree_height) %>%
+  mutate(alive = if_else(tree_height_2024=='d',0,1)) %>% # make a column for assigning alive/dead status; 0 = dead, 1 = alive or possibly missing for now
+  mutate(tree_height_2024 = as.numeric(tree_height_2024)) # missing or 'd' will become NA's
 
-## merge dendro and mast data
+## merge height and mast data
+reprodat <- mast.pin %>% left_join(height.pin)
 
-prod.dat <- den.pin %>% left_join(mast.pin)
+## how many trees with height and masting data do we have?
+reprodat %>%
+  filter(Year == 2020 & Fruit_Count > 0) %>%
+  pull(Field_ID) %>%
+  unique()
 
-# ----- PLOTS CONE PROD. by DBH ----------
-
-prod.dat %>% 
-  filter(Fruit_Count > 0) %>% # only look at mast years
-  ggplot(aes(x = avg.dbh, y = Fruit_Count)) + 
-  geom_point() + 
-  geom_smooth(method = "lm")
-
-# plot box plots of annual cone production by size class, over time
-prod.dat %>% 
-  ggplot(aes(x = avg.dbh, y = Fruit_Count)) + 
+# ----- PLOTS CONE PROD. by Height ----------
+# plot cone prod vs size in 2024
+reprodat %>% 
+  ggplot(aes(x = tree_height_2024, y = log(Fruit_Count))) +
   geom_point() +
-  geom_smooth(method = 'lm') +
-  facet_wrap(~Year, scales = "free") +
-  theme_classic()
+  geom_smooth(method = "glm", method.args = list(family = "poisson")) +
+  facet_wrap('Year')
 
-# number of individuals in the dataset
-length(unique(prod.dat$Field_ID))
 
-# ----- PLOTS CONE PROD. by AGE CLASS ----------
+# plot cone production in most recent 2 mast years against size in 2024
+reprodat %>% 
+  filter(Year == 2018|Year == 2020) %>% # only look at mast years
+  mutate(Year = as.factor(Year)) %>%
+  ggplot(aes(x = tree_height_2024, y = Fruit_Count)) +
+  geom_point(aes(col = Year)) +
+  geom_smooth(aes(col = Year), method = "glm", method.args = list(family = "poisson"))
 
-# plot annual cone production by age class
-mast.pin %>% ggplot(aes(x = Age, y = log(Fruit_Count))) + geom_boxplot()
+# plot cone production in only most recent mast year against size in 2024
+reprodat %>% 
+  filter(Year == 2020) %>% # only look at mast years
+  ggplot(aes(x = tree_height_2024, y = Fruit_Count)) +
+  geom_point() +
+  geom_smooth(method = "glm", method.args = list(family = "poisson"))
+
+# ------- FIT REPRODUCTION MODEL IN STAN -----
+
+# re arrange data
+
+# define 
   
-# plot box plots of annual cone production by size class, over time
-mast.pin %>% ggplot(aes(x = Age, y = log(Fruit_Count))) + 
-  geom_boxplot() +
-  facet_wrap(~Year)
-
-# ------ PLOT AGE CLASS vs. DBH -----------
-# plot annual cone production by age class
-prod.dat %>% ggplot(aes(x = Age, y = avg.dbh)) + geom_boxplot() 
