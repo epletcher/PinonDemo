@@ -6,7 +6,7 @@ survival - fits a model of survival (dead or alive) in the current year based on
 
 growth - fits a model of size in the current year (height) as a function of size in the previous year
 
-# There are two R scripts:
+# There are 3 R scripts:
 
 ModelPrepping and ModelPreppingReproduction - these scritps take cleaned data and run the stan models listed above.
 
