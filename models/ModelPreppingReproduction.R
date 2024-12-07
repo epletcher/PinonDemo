@@ -7,7 +7,14 @@ library(cowplot)
 
 # ------- FIT REPRODUCTION MODEL IN STAN -----
 
-# re arrange data
+# prep data
 
-# define 
+# specify model data
+reprodata <- list()
+
+#start <- list() # specify starting values, if needed
+
+# fit reproduction model
+reprofit1 <- stan(file='models/reproduction.stan', data=reprodata, chains=3, iter=3000, warmup=1500)
+
   

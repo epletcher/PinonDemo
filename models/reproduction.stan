@@ -17,7 +17,7 @@ parameters {
 model {
       
         for(i in 1:i){
-    y[i] ~ poisson(exp(beta0 + beta1*St[i]); 
+    cp[i] ~ poisson(exp(beta0 + beta1*St[i]); 
     
     }
   
