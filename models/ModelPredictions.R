@@ -34,7 +34,7 @@ min(St[which(St!=999)])
 max(St[which(St!=999)]) # ~0-7 (height)
 
 # vector of Size_tmins for generating preds
-log.St.min.range <- log(seq(0.05,7,0.05))
+log.St.min.range <- log(seq(0.1,7,0.05))
 
 # ----- Growth --------
 # # Empty matrix for mean predictions from growth model (no process error)
@@ -297,3 +297,51 @@ pval/length(growth.params$`beta0[1]`)
 
 hist(devobs.surv, col=rgb(0,0,1,1/4), xlim=c(400,1000))  
 hist(devsim.surv, col=rgb(1,0,0,1/4), xlim=c(400,1000), add=T)  
+
+# ------------ Plotting Survival (ggplot) ------------
+# named vector of years
+year.names <- c('2013' = 'V1', '2014' = 'V2', '2015' = 'V3', '2016' = 'V4', '2017' = 'V5', '2018' = 'V6', '2019' = 'V7', '2022' = 'V8')
+
+## reformat survival model predicitons
+
+# median
+med.surv.dat <- med.Surv.prob.range %>%
+  as.data.frame() %>%
+  rename(all_of(year.names)) %>% # rename columns to years
+  add_column('size.tmin' = exp(log.St.min.range)) %>% # add the size.tmin column
+  pivot_longer('2013':'2022', names_to = 'years', values_to = 'med.surv.prob') # pivot longer columns to years
+
+# lower credible interval
+low.surv.dat <- low.Surv.prob.range %>%
+  as.data.frame() %>%
+  rename(all_of(year.names)) %>% # rename columns to years
+  add_column('size.tmin' = exp(log.St.min.range)) %>% # add the size.tmin column
+  pivot_longer('2013':'2022', names_to = 'years', values_to = 'low.surv.prob') # pivot longer columns to years
+
+# upper credible interval
+up.surv.dat <- up.Surv.prob.range %>%
+  as.data.frame() %>%
+  rename(all_of(year.names)) %>% # rename columns to years
+  add_column('size.tmin' = exp(log.St.min.range)) %>% # add the size.tmin column
+  pivot_longer('2013':'2022', names_to = 'years', values_to = 'up.surv.prob') # pivot longer columns to years
+
+# merge
+surv.plot.dat <- left_join(med.surv.dat, low.surv.dat) %>% 
+  left_join(., up.surv.dat) %>% 
+  mutate(years = as.factor(years))
+
+## plot
+# cols
+cols <- c('2013'='#c7e9b9','2014'='#ADCC3C','2015'='#7fcdbb','2016'='#41b6c4','2017'='#1d91c0','2018'='#225ea8','2019'='#253494','2022'='black')
+
+surv.plot.dat %>% 
+  ggplot(aes(x = size.tmin, y = med.surv.prob)) +
+  geom_ribbon(aes(ymin = low.surv.prob, ymax = up.surv.prob, group = years, fill = years), 
+              alpha=0.3) +
+  scale_color_manual(values = cols) +
+  scale_fill_manual(values = cols) +
+  geom_line(aes(group = years, col = years), lwd = 1.25) +
+  labs(x = "size in previous year (height in meters)", y = "probability of survival") +
+  theme_bw()
+  
+  
