@@ -40,6 +40,9 @@ height.pin <- height.data %>%
 ## merge height and mast data
 reprodat <- mast.pin %>% left_join(height.pin)
 
+## save cleaned reprodat to file
+write.csv(reprodat, "cleaned_cone_prod_data.csv")
+
 ## how many trees with height and masting data do we have?
 length(which(reprodat$tree_height_2024>0&reprodat$Fruit_Count>=0&reprodat$Year==2020))
 
@@ -71,16 +74,32 @@ reprodat %>%
   geom_point(aes(x = Age, y = tree_height_2024))
 
 # ----- PLOT CONE PROD. VS HEIGHT ----------
+## plot
+tiff("reproduction_prelim_data_plotted.tif",width = 7,height=6,units="in", res=300)
 
 # plot cone production in most recent 2 mast years against size in 2024
+# cols
+cols <- c('2018'='#225ea8','2020'='#CB79E1')
+
 reprodat %>% 
   filter(Year == 2018|Year == 2020) %>% # only look at mast years
   mutate(Year = as.factor(Year)) %>%
   ggplot(aes(x = tree_height_2024, y = Fruit_Count)) +
-  geom_point(aes(col = Year)) +
-  geom_smooth(aes(col = Year), method = "glm", method.args = list(family = "poisson"))
+  geom_point(aes(col = Year, group = Year), alpha = 0.6) +
+  geom_smooth(aes(fill = Year, col = Year,group = Year), method = "glm", method.args = list(family = "poisson")) +
+  scale_color_manual(values = cols) +
+  scale_fill_manual(values = cols) +
+  labs(x = "size in 2024 (height in meters)", y = "Cone production 2020") +
+  theme(
+    text = element_text(size = 22),
+    legend.key = element_rect(fill = "white"),
+    panel.background = element_rect(linetype = "solid",fill = NA),
+    panel.border = element_rect(linetype = "solid", fill = NA),
+    panel.grid.major = element_line(colour = "lightgrey", linewidth = .4)
+  )
 
 # plot cone production in only most recent mast year against size in 2024
+
 reprodat %>% 
   filter(Year == 2020) %>% # only look at mast years
   ggplot(aes(x = tree_height_2024, y = Fruit_Count)) +

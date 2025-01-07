@@ -16,8 +16,13 @@ parameters {
 
 model {
       
-        for(i in 1:i){
-    cp[i] ~ poisson(exp(beta0 + beta1*St[i]); 
+        for(j in 1:i){
+          
+          if(St[j]!=999 && cp[j]!=999) { // in order to skip over NA's
+          
+    cp[j] ~ poisson(exp(beta0 + beta1*St[j])); 
+    
+          }
     
     }
   
