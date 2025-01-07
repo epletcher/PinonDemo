@@ -75,7 +75,7 @@ reprodat %>%
 
 # ----- PLOT CONE PROD. VS HEIGHT ----------
 ## plot
-tiff("reproduction_prelim_data_plotted.tif",width = 7,height=6,units="in", res=300)
+tiff("reproduction_prelim_data_plotted.tif",width = 6.5,height=6,units="in", res=300)
 
 # plot cone production in most recent 2 mast years against size in 2024
 # cols
@@ -98,11 +98,13 @@ reprodat %>%
     panel.grid.major = element_line(colour = "lightgrey", linewidth = .4)
   )
 
-# plot cone production in only most recent mast year against size in 2024
+# # plot cone production in only most recent mast year against size in 2024
+# 
+# reprodat %>% 
+#   filter(Year == 2020) %>% # only look at mast years
+#   ggplot(aes(x = tree_height_2024, y = Fruit_Count)) +
+#   geom_point() +
+#   geom_smooth(method = "glm", method.args = list(family = "poisson")) +
+#   theme_bw()
 
-reprodat %>% 
-  filter(Year == 2020) %>% # only look at mast years
-  ggplot(aes(x = tree_height_2024, y = Fruit_Count)) +
-  geom_point() +
-  geom_smooth(method = "glm", method.args = list(family = "poisson")) +
-  theme_bw()
+dev.off()
