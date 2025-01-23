@@ -22,9 +22,9 @@ invlogit <- function(x) {
 # Stmin = size the previous year, dimensions [y,i]
 # Surv = survival in the current year, dimensions [y,i]
 
-# # Convert beta0's and beta1's from growth and survival models into matrices
-# g.beta0 <- growth.params %>% select(starts_with('beta0[')) %>% as.matrix()
-# g.beta1 <- growth.params %>% select(starts_with('beta1[')) %>% as.matrix()
+# Convert beta0's and beta1's from growth and survival models into matrices
+g.beta0 <- growth.params %>% select(starts_with('beta0[')) %>% as.matrix()
+g.beta1 <- growth.params %>% select(starts_with('beta1[')) %>% as.matrix()
 
 s.beta0 <- survival.params %>% select(starts_with('beta0[')) %>% as.matrix()
 s.beta1 <- survival.params %>% select(starts_with('beta1[')) %>% as.matrix()
@@ -36,63 +36,53 @@ max(St[which(St!=999)]) # ~0-7 (height)
 # vector of Size_tmins for generating preds
 log.St.min.range <- log(seq(0.5,7,0.05))
 
-# ----- Growth --------
-# # Empty matrix for mean predictions from growth model (no process error)
-# St.mean.pred.range <- array(NA,c(length(log.St.min.range),y,length(growth.params$`beta0[1]`)))
-# 
-# for (k in 1:length(growth.params$`beta0[1]`)) {
-#   
-#   for(t in 1:y) {
-#         
-#         St.mean.pred.range[,t,k] <- g.beta0[k,t] + g.beta1[k,t]*log.St.min.range
-#         
-#         }
-# }
+# ----- Growth - year effect --------
+## Generate predictions for year effect growth model
+# Empty matrix for mean predictions from growth model (no process error)
+St.mean.pred.range <- array(NA,c(length(log.St.min.range),y,length(growth.params$`beta0[1]`)))
 
-St.mean.pred.range <- matrix(NA,length(log.St.min.range),length(growth.params$beta0))
+for (k in 1:length(growth.params$`beta0[1]`)) {
 
-for (k in 1:length(growth.params$beta0)) {
+  for(t in 1:y) {
 
-        St.mean.pred.range[,k] <- growth.params$beta0[k] + growth.params$beta1[k]*log.St.min.range
+        St.mean.pred.range[,t,k] <- g.beta0[k,t] + g.beta1[k,t]*log.St.min.range
 
+        }
 }
 
-# # extract median and 90% credible intervals of MEAN PREDICTED SIZE
-# med.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = median)
-# low.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.05) # low
-# up.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.95) # up
-# 
-# # plot predictions by year
-# # logged
-# matplot(x = log.St.min.range, y = med.St.pred.range, type = "l", lwd = 2, lty = 1, xlab = "log(size_tmin1)", ylab = "log(size_t)")
-# abline(0,1, col = "black", lwd = 1.5, lty=2)
-# 
-# # un logged values
-# matplot(x = exp(log.St.min.range),y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "size_t")
-# abline(0,1, col = "black", lwd = 1.5, lty=2)
-
 # extract median and 90% credible intervals of MEAN PREDICTED SIZE
-med.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1), FUN = median)
-low.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1), FUN = quantile, 0.05) # low
-up.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1), FUN = quantile, 0.95) # up
+med.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = median)
+low.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.05) # low
+up.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.95) # up
 
-# plot
-plot(x = exp(log.St.min.range), y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "log(size_t1)", ylab = "log(size_t2)", col = "aquamarine3")
-lines(x = exp(log.St.min.range), y = exp(low.St.pred.range), lty = 2, col = "aquamarine3")
-lines(x = exp(log.St.min.range), y = exp(up.St.pred.range), lty = 2, col = "aquamarine3")
+# plot predictions by year
+# logged
+matplot(x = log.St.min.range, y = med.St.pred.range, type = "l", lwd = 2, lty = 1, xlab = "log(size_tmin1)", ylab = "log(size_t)")
+abline(0,1, col = "black", lwd = 1.5, lty=2)
 
-# # plot predictions by year
-# # logged
-# plot(x = log.St.min.range, y = med.St.pred.range, type = "l", lwd = 2, lty = 1, xlab = "log(size_t1)", ylab = "log(size_t2)", col = "aquamarine3")
-# lines(x = log.St.min.range, y = low.St.pred.range, lty = 2, col = "aquamarine3")
-# lines(x = log.St.min.range, y = up.St.pred.range, lty = 2, col = "aquamarine3")
-# abline(0,1, col = "black", lwd = 1.5, lty=3)
+# un logged values
+matplot(x = exp(log.St.min.range),y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "size_t")
+abline(0,1, col = "black", lwd = 1.5, lty=2)
+# ----- Growth - no year effect --------
+## # Generate yhats for no year effect
+# St.mean.pred.range <- matrix(NA,length(log.St.min.range),length(growth.params$beta0))
 # 
-# # un logged values
-# plot(x = exp(log.St.min.range), y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_t1", ylab = "size_t2", col = "aquamarine3")
+# for (k in 1:length(growth.params$beta0)) {
+# 
+#         St.mean.pred.range[,k] <- growth.params$beta0[k] + growth.params$beta1[k]*log.St.min.range
+# 
+# }
+
+# # extract median and 90% credible intervals of MEAN PREDICTED SIZE
+# med.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1), FUN = median)
+# low.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1), FUN = quantile, 0.05) # low
+# up.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1), FUN = quantile, 0.95) # up
+# 
+# # plot
+# plot(x = exp(log.St.min.range), y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "log(size_t1)", ylab = "log(size_t2)", col = "aquamarine3")
 # lines(x = exp(log.St.min.range), y = exp(low.St.pred.range), lty = 2, col = "aquamarine3")
 # lines(x = exp(log.St.min.range), y = exp(up.St.pred.range), lty = 2, col = "aquamarine3")
-# abline(0,1, col = "black", lwd = 1.5, lty=3)
+# 
 
 # ------ Survival --------
 
@@ -135,8 +125,8 @@ St.obs <-  demo.data %>%
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
   # reorder rows so that years are in order
   arrange(Year) %>%
-  # filter years to only 2013-2019 and 2022 (when data is consistent for ht)
-  filter(Year>2012&Year!=2021) %>%
+  # filter years to only 2013-2018 (when data is consistent and high quality for ht)
+  filter(Year>2012&Year<2019) %>%
   select(-Year) %>%
   as.matrix() 
 
@@ -147,8 +137,8 @@ Stmin.obs <- demo.data %>%
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
   # reorder rows so that years are in order
   arrange(Year) %>%
-  # filter years to only 2013-2019 and 2022 (when data is consistent for ht)
-  filter(Year>2012&Year!=2021) %>%
+  # filter years to only 2013-2018 (when data is consistent and high quality for ht)
+  filter(Year>2012&Year<2019) %>%
   select(-Year) %>%
   as.matrix()
 
@@ -190,8 +180,8 @@ if(devsim[k]>devobs[k]) {pval=pval+1}
 
 pval/length(growth.params$`beta0[1]`)
 
-hist(devobs, col=rgb(0,0,1,1/4), xlim=c(-2200,-1500))  # first histogram
-hist(devsim, col=rgb(1,0,0,1/4), xlim=c(-2200,-1500), add=T)  # second
+hist(devobs, col=rgb(0,0,1,1/4), xlim=c(-2200,-1400))  # first histogram
+hist(devsim, col=rgb(1,0,0,1/4), xlim=c(-2200,-1400), add=T)  # second
 
 # ------------ Growth 2 model (no year effect) PPC -------------
 

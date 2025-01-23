@@ -56,6 +56,34 @@ demo.data %>%
   geom_abline(intercept = 1, slope = 0, col = "red", lty =2, lwd = 1.2) +
   theme_bw()
 )
+
+## plot time-series of sizes if a tree grows or shrinks more than 0.5 from one year to the next
+
+# list of trees with growth >0.5 or <-0.5
+growth.err <- demo.data %>% 
+  filter(Year != 2012 & Year != 2021) %>%
+  mutate(ann_grow = Ht-Ht.t.min.1) %>%
+  filter(ann_grow > 0.5 | ann_grow < -0.5) %>% 
+  pull(raw.data.TreeID) %>%
+  unique()
+
+# number of trees with annual >0.5 or <-0.5
+length(growth.err)
+  
+# plot time series of annual hieght for trees with growth anomalies
+demo.data %>% 
+  filter(Year != 2012 & Year != 2021) %>%
+  mutate(ann_grow = Ht-Ht.t.min.1) %>%
+  filter(raw.data.TreeID %in% growth.err) %>%
+  ggplot(aes(x = Year, y = Ht)) +
+  labs(y= "Ht (m)", x = "year") +
+  geom_point(aes(col = raw.data.TreeID)) +
+  geom_line(aes(col = raw.data.TreeID)) + 
+  scale_x_continuous(breaks = seq(2013,2022,1)) +
+  scale_y_continuous(breaks = seq(0,7,0.5)) +
+  theme_bw() +
+  theme(legend.position="none")
+
 # ----- plot the size variable by year -----
 
 # size tmin vs. size (growth)
@@ -102,7 +130,7 @@ demo.data %>%
   theme_bw()
 
 # ------- Prep data and model Growth -------
-# building models where intercept and slope vary by year, 2013-2022
+# building models where intercept and slope vary by year, 2013-2018 (highest quality data)
 # no data for 2020 or 2021 b/c no data collection 2020.
 # tmin is size in previous year
 # size is the current year's size
@@ -114,71 +142,72 @@ demo.data %>%
 #   dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
 #   dplyr::filter(n > 1L) 
 
-# ## Stmin is size at the previous time step
-# Stmin <- demo.data %>% 
-#   select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
-#   # reorganize data so columns are individuals, rows are years
-#   pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
-#   # reorder rows so that years are in order
-#   arrange(Year) %>%
-#   # filter years to only 2013-2019 and 2022 (when data is consistent for height)
-#   filter(Year>2012&Year!=2021) %>%
-#   select(-Year) %>%
-#   as.matrix()
+## Stmin is size at the previous time step
+Stmin <- demo.data %>%
+  select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
+  # reorganize data so columns are individuals, rows are years
+  pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
+  # reorder rows so that years are in order
+  arrange(Year) %>%
+  # filter years to only 2013-2018 (when data is consistent for height, and before 2019, when there were errors in the data)
+  filter(Year>2012&Year<2019) %>%
+  select(-Year) %>%
+  as.matrix()
+
+## St is size at the current size step
+St <-  demo.data %>%
+  select(c(raw.data.TreeID, Year, Ht)) %>%
+  # reorganize data so columns are individuals, rows are years
+  pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
+  # reorder rows so that years are in order
+  arrange(Year) %>%
+  # filter years to only 2013-2019 and 2022 (when data is consistent for ht)
+  filter(Year>2012&Year<2019) %>%
+  select(-Year) %>%
+  as.matrix()
+
+# check that column names and years/rows match for St and Stmin
+colnames(St)==colnames(Stmin)
+St[,1]==Stmin[,1]
+
+# reassign NAs as 999 (Stand doesn't accept NA's)
+Stmin[is.na(Stmin)]<-999
+St[is.na(St)]<-999
+
+
+# ## St1 is size at the first time step (year = 2013) ** best year to use for growth&data quality purposes
+# St1 <- demo.data %>% 
+#   select(c(raw.data.TreeID, Year, Ht)) %>% 
+#   pivot_wider(names_from = Year, values_from = Ht) %>%
+#   mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
+#   #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
+#   pull(`2013`)
 # 
-# ## St is size at the current size step
-# St <-  demo.data %>% 
-#   select(c(raw.data.TreeID, Year, Ht)) %>%
-#   # reorganize data so columns are individuals, rows are years
-#   pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
-#   # reorder rows so that years are in order
-#   arrange(Year) %>%
-#   # filter years to only 2013-2019 and 2022 (when data is consistent for ht)
-#   filter(Year>2012&Year!=2021) %>%
-#   select(-Year) %>%
-#   as.matrix() 
-
-# # check that column names and years/rows match for St and Stmin
-# colnames(St)==colnames(Stmin)
-# St[,1]==Stmin[,1]
+# ## St2 is size at the last time step (year = 2018) ** best year to use for growth&data quality purposes
+# St2 <- demo.data %>% 
+#   select(c(raw.data.TreeID, Year, Ht)) %>% 
+#   pivot_wider(names_from = Year, values_from = Ht) %>%
+#   mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
+#   #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
+#   pull(`2018`)
 # 
-# # reassign NAs as 999 (Stand doesn't accept NA's)
-# Stmin[is.na(Stmin)]<-999
-# St[is.na(St)]<-999
-
-
-## St1 is size at the first time step (year = 2013) ** best year to use for growth&data quality purposes
-St1 <- demo.data %>% 
-  select(c(raw.data.TreeID, Year, Ht)) %>% 
-  pivot_wider(names_from = Year, values_from = Ht) %>%
-  mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
-  #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
-  pull(`2013`)
-
-## St2 is size at the last time step (year = 2018) ** best year to use for growth&data quality purposes
-St2 <- demo.data %>% 
-  select(c(raw.data.TreeID, Year, Ht)) %>% 
-  pivot_wider(names_from = Year, values_from = Ht) %>%
-  mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
-  #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
-  pull(`2018`)
-
-# # reassign NAs as 999 (Stand doesn't accept NA's)
-St1[is.na(St1)]<-999
-St2[is.na(St2)]<-999
+# # # reassign NAs as 999 (Stand doesn't accept NA's)
+# St1[is.na(St1)]<-999
+# St2[is.na(St2)]<-999
 
 # specify model data
-i = length(St1) # index by individuals 
-# y = dim(St)[1] # index by year
+# i = length(St1) # index by individuals 
+i = dim(St)[2] # index by individuals 
+y = dim(St)[1] # index by year
 
 # specify model data
-# growthdata <- list(i = i, y = y, St = St, Stmin = Stmin)
-growthdata <- list(i = i, St1 = St1, St2 = St2)
+growthdata <- list(i = i, y = y, St = St, Stmin = Stmin)
+# growthdata <- list(i = i, St1 = St1, St2 = St2)
 
 #start <- list() # specify starting values, if needed
 
 # fit growth model
-growthfit1 <- stan(file='models/growth.stan', data=growthdata, chains=3, iter=3000, warmup=1500)
+growthfit1 <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500)
 
 # ------ Prep data and model Survival -------
 ## Stmin is size at the previous time step
@@ -237,22 +266,20 @@ launch_shinystan(survivalfit1)
 # -------- Extract posterior estimates ------
 # put parameter estimates in a dataframe
 
-# ## growth params
-# growth.params <- 
-#   as.matrix(growthfit1, pars = c("beta0[1]","beta0[2]","beta0[3]",
-#                                  "beta0[4]","beta0[5]","beta0[6]",
-#                                  "beta0[7]","beta0[8]",
-#                                  "beta1[1]","beta1[2]","beta1[3]",
-#                                  "beta1[4]","beta1[5]","beta1[6]",
-#                                  "beta1[7]","beta1[8]","sigma",
-#                                  "beta0mu","beta1mu","tausq0",
-#                                  "tausq1")) %>% 
-#                                     as.data.frame()
+## For gorwth by year model: growth params
+growth.params <-
+  as.matrix(growthfit1, pars = c("beta0[1]","beta0[2]","beta0[3]",
+                                 "beta0[4]","beta0[5]","beta0[6]",
+                                 "beta1[1]","beta1[2]","beta1[3]",
+                                 "beta1[4]","beta1[5]","beta1[6]",
+                                 "sigma","beta0mu","beta1mu","tausq0",
+                                 "tausq1")) %>%
+                                    as.data.frame()
 
-## growth params
-growth.params <- 
-  as.matrix(growthfit1, pars = c("beta0","beta1","sigma")) %>% 
-  as.data.frame()
+# ## For single time transition model: growth params
+# growth.params <- 
+#   as.matrix(growthfit1, pars = c("beta0","beta1","sigma")) %>% 
+#   as.data.frame()
 
 ## survival paramas
 survival.params <- 
