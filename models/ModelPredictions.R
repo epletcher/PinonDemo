@@ -34,35 +34,39 @@ min(St[which(St!=999)])
 max(St[which(St!=999)]) # ~0-7 (height)
 
 # vector of Size_tmins for generating preds
-log.St.min.range <- log(seq(0.5,7,0.05))
+St.min.range <- seq(0.5,7,0.05)
 
 # ----- Growth - year effect --------
+
 ## Generate predictions for year effect growth model
 # Empty matrix for mean predictions from growth model (no process error)
-St.mean.pred.range <- array(NA,c(length(log.St.min.range),y,length(growth.params$`beta0[1]`)))
+mean.pred.range <- array(NA,c(length(St.min.range),y,length(growth.params$`beta0[1]`)))
 
 for (k in 1:length(growth.params$`beta0[1]`)) {
 
   for(t in 1:y) {
 
-        St.mean.pred.range[,t,k] <- g.beta0[k,t] + g.beta1[k,t]*log.St.min.range
+        mean.pred.range[,t,k] <- g.beta0[k,t] + g.beta1[k,t]*log(St.min.range)
 
         }
 }
 
 # extract median and 90% credible intervals of MEAN PREDICTED SIZE
-med.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = median)
-low.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.05) # low
-up.St.pred.range <- apply(St.mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.95) # up
+med.G.pred.range <- apply(mean.pred.range, MARGIN = c(1,2), FUN = median)
+low.G.pred.range <- apply(mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.05) # low
+up.G.pred.range <- apply(mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.95) # up
 
-# plot predictions by year
-# logged
-matplot(x = log.St.min.range, y = med.St.pred.range, type = "l", lwd = 2, lty = 1, xlab = "log(size_tmin1)", ylab = "log(size_t)")
-abline(0,1, col = "black", lwd = 1.5, lty=2)
+# plot predictions by (growth modeled directly)
+matplot(x = St.min.range, y = exp(med.G.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "growth by height in meters")
 
-# un logged values
-matplot(x = exp(log.St.min.range),y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "size_t")
-abline(0,1, col = "black", lwd = 1.5, lty=2)
+# plot predictions by year (size in current year modeled)
+# # logged
+# matplot(x = log.St.min.range, y = med.St.pred.range, type = "l", lwd = 2, lty = 1, xlab = "log(size_tmin1)", ylab = "log(size_t)")
+# abline(0,1, col = "black", lwd = 1.5, lty=2)
+
+# # un logged values
+# matplot(x = exp(log.St.min.range),y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "size_t")
+# abline(0,1, col = "black", lwd = 1.5, lty=2)
 # ----- Growth - no year effect --------
 ## # Generate yhats for no year effect
 # St.mean.pred.range <- matrix(NA,length(log.St.min.range),length(growth.params$beta0))
@@ -128,7 +132,7 @@ St.obs <-  demo.data %>%
   # filter years to only 2013-2018 (when data is consistent and high quality for ht)
   filter(Year>2012&Year<2019) %>%
   select(-Year) %>%
-  as.matrix() 
+  as.matrix()
 
 # convert 999 in Stmin back to NAs
 Stmin.obs <- demo.data %>% 
@@ -142,19 +146,25 @@ Stmin.obs <- demo.data %>%
   select(-Year) %>%
   as.matrix()
 
+# convert 999 in Stmin back to NAs
+G.obs <- St.obs/Stmin.obs
+
 ## Produce mean predictions from growth model
-# Empty matrix
-St.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
-St.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+# # Empty matrix
+# St.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+# St.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+
+G.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+G.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
 
 # loop over years and iterations
 for (k in 1:length(growth.params$`beta0[1]`)) {
   
   for(t in 1:y) {
-    
-        St.yhat[t,,k] <- rnorm(length(Stmin.obs[1,]), g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]), growth.params$sigma[k]) # process error
+    # ** calculating for direct growth model here **
+        G.yhat[t,,k] <- rnorm(length(Stmin.obs[1,]), g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]), growth.params$sigma[k]) # process error
         
-        St.mean.pred[t,,k] <- g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]) # mean prediction
+        G.mean.pred[t,,k] <- g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]) # mean prediction
   }
   
 }
@@ -165,8 +175,8 @@ devobs <- rep(NA,length(growth.params$`beta0[1]`))
 
 for(k in 1:length(growth.params$`beta0[1]`)) {
   
-  devsim[k] <- -2*sum(dnorm(St.yhat[,,k], St.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
-  devobs[k] <- -2*sum(dnorm(log(St.obs), St.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
+  devsim[k] <- -2*sum(dnorm(G.yhat[,,k], G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
+  devobs[k] <- -2*sum(dnorm(G.obs, G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
   
 }
 
@@ -180,8 +190,8 @@ if(devsim[k]>devobs[k]) {pval=pval+1}
 
 pval/length(growth.params$`beta0[1]`)
 
-hist(devobs, col=rgb(0,0,1,1/4), xlim=c(-2200,-1400))  # first histogram
-hist(devsim, col=rgb(1,0,0,1/4), xlim=c(-2200,-1400), add=T)  # second
+hist(devobs, col=rgb(0,0,1,1/4), xlim = c(1000,4000))  # first histogram
+hist(devsim, col=rgb(1,0,0,1/4), xlim = c(1000,4000), add=T)  # second
 
 # ------------ Growth 2 model (no year effect) PPC -------------
 

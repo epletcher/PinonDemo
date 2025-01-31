@@ -130,6 +130,8 @@ demo.data %>%
   theme_bw()
 
 # ------- Prep data and model Growth -------
+
+
 # building models where intercept and slope vary by year, 2013-2018 (highest quality data)
 # no data for 2020 or 2021 b/c no data collection 2020.
 # tmin is size in previous year
@@ -141,6 +143,7 @@ demo.data %>%
 #   dplyr::group_by(Year, raw.data.TreeID) %>%
 #   dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
 #   dplyr::filter(n > 1L) 
+
 
 ## Stmin is size at the previous time step
 Stmin <- demo.data %>%
@@ -166,6 +169,9 @@ St <-  demo.data %>%
   select(-Year) %>%
   as.matrix()
 
+# G is the growth ratio from Stmin to St
+G <- St/Stmin
+
 # check that column names and years/rows match for St and Stmin
 colnames(St)==colnames(Stmin)
 St[,1]==Stmin[,1]
@@ -173,6 +179,7 @@ St[,1]==Stmin[,1]
 # reassign NAs as 999 (Stand doesn't accept NA's)
 Stmin[is.na(Stmin)]<-999
 St[is.na(St)]<-999
+G[is.na(G)]<-999
 
 
 # ## St1 is size at the first time step (year = 2013) ** best year to use for growth&data quality purposes
@@ -201,7 +208,7 @@ i = dim(St)[2] # index by individuals
 y = dim(St)[1] # index by year
 
 # specify model data
-growthdata <- list(i = i, y = y, St = St, Stmin = Stmin)
+growthdata <- list(i = i, y = y, St = St, Stmin = Stmin, G=G)
 # growthdata <- list(i = i, St1 = St1, St2 = St2)
 
 #start <- list() # specify starting values, if needed

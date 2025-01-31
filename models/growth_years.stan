@@ -3,7 +3,8 @@ data {
   int<lower=0> i; // individual
   int<lower=0> y; // time / year
   matrix[y,i] St; //Response size at t
-  matrix[y,i] Stmin; // size at t-1 // size at t-1
+  matrix[y,i] Stmin; // size at t-1
+  matrix[y,i] G; // growth from size at t-1 to size at t
 }
 
 // The parameters accepted by the model. Our model
@@ -18,26 +19,37 @@ parameters {
   
 }
 
+// model current size
+// model {
+// 
+//     for(t in 1:y) {
+//       
+//       for(j in 1:i) {
+//         
+//         if(St[t,j]!=999 && Stmin[t,j]!=999) { // in order to skip over NA's
+//         
+//           log(St[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma);
+//           
+//         }
+//       }
+//     }
+
+// model actual gorwth
+
 model {
-  
-  //for(t in 1:y) {
-    
-   // log(St[y,]) ~ normal(beta0[y] + beta1[y]*log(Stmin[y,]), sigma);
-   
- // } 
- 
+
     for(t in 1:y) {
       
       for(j in 1:i) {
         
-        if(St[t,j]!=999 && Stmin[t,j]!=999) { // in order to skip over NA's
+        if(G[t,j]!=999 && Stmin[t,j]!=999) { // in order to skip over NA's
         
-          log(St[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma);
+          log(G[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma);
           
         }
       }
     }
-    
+
   //Prior
   beta0~normal(beta0mu,tausq0); 
   beta1~normal(beta1mu,tausq1); 
