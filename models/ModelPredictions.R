@@ -34,12 +34,14 @@ min(St[which(St!=999)])
 max(St[which(St!=999)]) # ~0-7 (height)
 
 # vector of Size_tmins for generating preds
-St.min.range <- seq(0.5,7,0.05)
+St.min.range <- seq(0.75,7,0.05)
 
 # ----- Growth - year effect --------
 
 ## Generate predictions for year effect growth model
 # Empty matrix for mean predictions from growth model (no process error)
+y = dim(St)[1]
+
 mean.pred.range <- array(NA,c(length(St.min.range),y,length(growth.params$`beta0[1]`)))
 
 for (k in 1:length(growth.params$`beta0[1]`)) {
@@ -57,7 +59,7 @@ low.G.pred.range <- apply(mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.05
 up.G.pred.range <- apply(mean.pred.range, MARGIN = c(1,2), FUN = quantile, 0.95) # up
 
 # plot predictions by (growth modeled directly)
-matplot(x = St.min.range, y = exp(med.G.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "growth by height in meters")
+matplot(x = St.min.range, y = exp(med.G.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "growth ratio by height in meters")
 
 # plot predictions by year (size in current year modeled)
 # # logged
@@ -67,6 +69,7 @@ matplot(x = St.min.range, y = exp(med.G.pred.range), type = "l", lwd = 2, lty = 
 # # un logged values
 # matplot(x = exp(log.St.min.range),y = exp(med.St.pred.range), type = "l", lwd = 2, lty = 1, xlab = "size_tmin1", ylab = "size_t")
 # abline(0,1, col = "black", lwd = 1.5, lty=2)
+
 # ----- Growth - no year effect --------
 ## # Generate yhats for no year effect
 # St.mean.pred.range <- matrix(NA,length(log.St.min.range),length(growth.params$beta0))
@@ -91,13 +94,15 @@ matplot(x = St.min.range, y = exp(med.G.pred.range), type = "l", lwd = 2, lty = 
 # ------ Survival --------
 
 # generate probability of survival (across all years and iterations)
-Surv.prob.range <- array(NA,c(length(log.St.min.range),y,length(survival.params$`beta0[1]`)))
+y = dim(Surv)[1]
+
+Surv.prob.range <- array(NA,c(length(St.min.range),y,length(survival.params$`beta0[1]`)))
 
 for (k in 1:length(survival.params$`beta0[1]`)) {
   
   for(t in 1:y) {
     
-    Surv.prob.range[,t,k] <- invlogit(s.beta0[k,t] + s.beta1[k,t]*log.St.min.range)
+    Surv.prob.range[,t,k] <- invlogit(s.beta0[k,t] + s.beta1[k,t]*log(St.min.range))
     
   }
   
@@ -111,12 +116,12 @@ up.Surv.prob.range <- apply(Surv.prob.range, MARGIN = c(1,2), FUN = quantile, 0.
 
 
 # logged
-matplot(x = log.St.min.range, y = med.Surv.prob.range, type = "l", lty = 1, lwd = 2, xlab = "log(size_tmin)", ylab = "p(surv)")
+matplot(x = log(St.min.range), y = med.Surv.prob.range, type = "l", lty = 1, lwd = 2, xlab = "log(size_tmin)", ylab = "p(surv)")
 
 # unlogged
-matplot(x = exp(log.St.min.range), y = med.Surv.prob.range, type = "l", lty = 1, lwd = 2, xlab = "size_tmin", ylab = "p(surv)")
-matplot(x = exp(log.St.min.range), y = up.Surv.prob.range, type = "l", lty = 2, lwd = 1, add = T)
-matplot(x = exp(log.St.min.range), y = low.Surv.prob.range, type = "l", lty = 2, lwd = 1, add = T)
+matplot(x = St.min.range, y = med.Surv.prob.range, type = "l", lty = 1, lwd = 2, xlab = "size_tmin", ylab = "p(surv)")
+matplot(x = St.min.range, y = up.Surv.prob.range, type = "l", lty = 2, lwd = 1, add = T)
+matplot(x = St.min.range, y = low.Surv.prob.range, type = "l", lty = 2, lwd = 1, add = T)
 
 # ------------ Growth model posterior predictive check -------------
 
@@ -153,6 +158,7 @@ G.obs <- St.obs/Stmin.obs
 # # Empty matrix
 # St.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
 # St.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+y = Stmin.obs
 
 G.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
 G.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
@@ -176,7 +182,7 @@ devobs <- rep(NA,length(growth.params$`beta0[1]`))
 for(k in 1:length(growth.params$`beta0[1]`)) {
   
   devsim[k] <- -2*sum(dnorm(G.yhat[,,k], G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
-  devobs[k] <- -2*sum(dnorm(G.obs, G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
+  devobs[k] <- -2*sum(dnorm(log(G.obs), G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
   
 }
 
@@ -190,8 +196,8 @@ if(devsim[k]>devobs[k]) {pval=pval+1}
 
 pval/length(growth.params$`beta0[1]`)
 
-hist(devobs, col=rgb(0,0,1,1/4), xlim = c(1000,4000))  # first histogram
-hist(devsim, col=rgb(1,0,0,1/4), xlim = c(1000,4000), add=T)  # second
+hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-100,100))  # first histogram
+hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-100,100), add=T)  # second
 
 # ------------ Growth 2 model (no year effect) PPC -------------
 

@@ -34,7 +34,7 @@ parameters {
 //       }
 //     }
 
-// model actual gorwth
+// model actual growth
 
 model {
 

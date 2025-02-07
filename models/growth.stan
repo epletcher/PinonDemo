@@ -3,6 +3,7 @@ data {
   int<lower=0> i; // individual
   vector[i] St2; //Response; size at last time step
   vector[i] St1; // size at first timestep
+  vector[i] G1; // growth from size at t-1 to size at t
 }
 
 // The parameters accepted by the model. Our model
@@ -23,7 +24,7 @@ model {
         
         if(St2[j]!=999 && St1[j]!=999) { // in order to skip over NA's
         
-          log(St2[j]) ~ normal(beta0 + beta1*log(St1[j]), sigma);
+          log(G1[j]) ~ normal(beta0 + beta1*log(St1[j]), sigma);
           
       }
     }

@@ -9,7 +9,7 @@ library(cowplot)
 ## load demo data
 demo.data <- read.csv("cleaned_demo_data.csv")
 
-# remove outlier (** just removing entire tree's row for now)
+# remove outlier (just removing entire tree's row for now)
 demo.data <- demo.data[-which(demo.data$CanDiam2==22.40),]
 
 # ------ Add a few more columns ---------
@@ -28,7 +28,10 @@ demo.data <- demo.data %>%
   # mutate("Ht.t.min.1.sq" = Ht.t.min.1^2) %>%
   # mutate("DBH.tmin.1.sq" = DBH.tmin.1^2)
 
-# -------plot growth --------
+# ------- plot growth --------
+
+## Check for annual growth outliers
+
 plot_grid(
 # annual growth
 demo.data %>% 
@@ -57,7 +60,7 @@ demo.data %>%
   theme_bw()
 )
 
-## plot time-series of sizes if a tree grows or shrinks more than 0.5 from one year to the next
+## plot time-series of growth outliers (tree either grows or shrinks more than 0.5 from one year to the next)
 
 # list of trees with growth >0.5 or <-0.5
 growth.err <- demo.data %>% 
@@ -99,7 +102,7 @@ demo.data %>%
 
 # size early year vs. late year
 # height 2013 to 2018
-# **2019 and 2021 have some Ht measurements that seem like they must be measurement errors (more growth than biologically possible)
+# 2019 and 2021 have some Ht measurements that seem like they must be measurement errors (more growth than biologically possible)
 demo.data %>% 
   select(c(raw.data.TreeID, Year, Ht)) %>% 
   pivot_wider(names_from = Year, values_from = Ht) %>%
@@ -111,24 +114,6 @@ demo.data %>%
   geom_abline(lty = 2) +
   theme_bw()
 
-#** filter to see which individuals are outliers in 2013 to 2018 graph
-demo.data %>% 
-  select(c(raw.data.TreeID, Year, Ht)) %>% 
-  pivot_wider(names_from = Year, values_from = Ht) %>%
-  mutate("growth" = `2018`-`2013`) %>%
-  select(c(raw.data.TreeID,growth)) %>%
-  filter(growth >= 0.5)
-
-# survival
-demo.data %>% 
-  # filter to at least remove 2012 and 2021 for a lack of previous year data, but other years may have too little data to be useful too
-  filter(Year != 2012 & Year != 2021) %>%
-  ggplot(aes(x = Ht.t.min.1, y = Alive)) + 
-  geom_point() + 
-  geom_smooth(method = "glm", method.args = list(family = "binomial")) +
-  facet_wrap(vars(Year)) +
-  theme_bw()
-
 # ------- Prep data and model Growth -------
 
 
@@ -137,16 +122,8 @@ demo.data %>%
 # tmin is size in previous year
 # size is the current year's size
 
-# # Check if there is there a duplicate tree id year combination
-# # Removed in DataCleaning
-# demo.data %>%
-#   dplyr::group_by(Year, raw.data.TreeID) %>%
-#   dplyr::summarise(n = dplyr::n(), .groups = "drop") %>%
-#   dplyr::filter(n > 1L) 
-
-
 ## Stmin is size at the previous time step
-Stmin <- demo.data %>%
+Stmin.obs <- demo.data %>%
   select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
   # reorganize data so columns are individuals, rows are years
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
@@ -158,7 +135,7 @@ Stmin <- demo.data %>%
   as.matrix()
 
 ## St is size at the current size step
-St <-  demo.data %>%
+St.obs <-  demo.data %>%
   select(c(raw.data.TreeID, Year, Ht)) %>%
   # reorganize data so columns are individuals, rows are years
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
@@ -170,46 +147,54 @@ St <-  demo.data %>%
   as.matrix()
 
 # G is the growth ratio from Stmin to St
-G <- St/Stmin
+G.obs <- St.obs/Stmin.obs
 
 # check that column names and years/rows match for St and Stmin
-colnames(St)==colnames(Stmin)
-St[,1]==Stmin[,1]
+colnames(St.obs)==colnames(Stmin.obs)
 
 # reassign NAs as 999 (Stand doesn't accept NA's)
+Stmin <- Stmin.obs
 Stmin[is.na(Stmin)]<-999
+
+St <- St.obs
 St[is.na(St)]<-999
+
+G <- G.obs
 G[is.na(G)]<-999
 
 
 # ## St1 is size at the first time step (year = 2013) ** best year to use for growth&data quality purposes
-# St1 <- demo.data %>% 
-#   select(c(raw.data.TreeID, Year, Ht)) %>% 
+# St1 <- demo.data %>%
+#   select(c(raw.data.TreeID, Year, Ht)) %>%
 #   pivot_wider(names_from = Year, values_from = Ht) %>%
 #   mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
 #   #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
 #   pull(`2013`)
 # 
 # ## St2 is size at the last time step (year = 2018) ** best year to use for growth&data quality purposes
-# St2 <- demo.data %>% 
-#   select(c(raw.data.TreeID, Year, Ht)) %>% 
+# St2 <- demo.data %>%
+#   select(c(raw.data.TreeID, Year, Ht)) %>%
 #   pivot_wider(names_from = Year, values_from = Ht) %>%
 #   mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
 #   #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
 #   pull(`2018`)
 # 
+# # G is the growth ratio from Stmin to St
+# G1 <- St2/St1
+# 
 # # # reassign NAs as 999 (Stand doesn't accept NA's)
 # St1[is.na(St1)]<-999
 # St2[is.na(St2)]<-999
+# G1[is.na(G1)]<-999
 
 # specify model data
-# i = length(St1) # index by individuals 
-i = dim(St)[2] # index by individuals 
+# i = length(St1) # index by individuals
+i = dim(St)[2] # index by individuals
 y = dim(St)[1] # index by year
 
 # specify model data
 growthdata <- list(i = i, y = y, St = St, Stmin = Stmin, G=G)
-# growthdata <- list(i = i, St1 = St1, St2 = St2)
+# growthdata <- list(i = i, St1 = St1, St2 = St2, G1 = G1)
 
 #start <- list() # specify starting values, if needed
 
@@ -248,8 +233,8 @@ Surv <-  demo.data %>%
 # reassign NAs as 999 (Stand doesn't accept NA's)
 Surv[is.na(Surv)]<-999
 
-i = dim(St)[2] # index by individuals 
-y = dim(St)[1] # index by year
+i = dim(Stmin)[2] # index by individuals 
+y = dim(Stmin)[1] # index by year
 # specify model data
 survdata <- list(i = i, y = y, Surv = Surv, Stmin = Stmin)
 
