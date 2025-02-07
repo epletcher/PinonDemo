@@ -3,7 +3,7 @@ data {
   int<lower=0> i; // individual
   int<lower=0> y; // year
   int Surv[y,i]; //Response (survival)
-  matrix[y,i] Stmin; // size at t-1
+  matrix[y,i] Stmin2; // size at t-1
 }
 
 // parameters (betas)
@@ -24,9 +24,9 @@ model {
       
       for(j in 1:i) {
         
-        if(Surv[t,j]!=999 && Stmin[t,j]!=999) { // in order to skip over NA's
+        if(Surv[t,j]!=999 && Stmin2[t,j]!=999) { // in order to skip over NA's
     
-          Surv[t,j] ~ bernoulli(inv_logit(beta0[t] + (beta1[t]*log(Stmin[t,j]))));
+          Surv[t,j] ~ bernoulli(inv_logit(beta0[t] + (beta1[t]*log(Stmin2[t,j]))));
           
         }
         

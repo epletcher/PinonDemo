@@ -125,40 +125,11 @@ matplot(x = St.min.range, y = low.Surv.prob.range, type = "l", lty = 2, lwd = 1,
 
 # ------------ Growth model posterior predictive check -------------
 
-## prep data
-
-# convert 999 in St back NAs
-St.obs <-  demo.data %>% 
-  select(c(raw.data.TreeID, Year, Ht)) %>%
-  # reorganize data so columns are individuals, rows are years
-  pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
-  # reorder rows so that years are in order
-  arrange(Year) %>%
-  # filter years to only 2013-2018 (when data is consistent and high quality for ht)
-  filter(Year>2012&Year<2019) %>%
-  select(-Year) %>%
-  as.matrix()
-
-# convert 999 in Stmin back to NAs
-Stmin.obs <- demo.data %>% 
-  select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
-  # reorganize data so columns are individuals, rows are years
-  pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
-  # reorder rows so that years are in order
-  arrange(Year) %>%
-  # filter years to only 2013-2018 (when data is consistent and high quality for ht)
-  filter(Year>2012&Year<2019) %>%
-  select(-Year) %>%
-  as.matrix()
-
-# convert 999 in Stmin back to NAs
-G.obs <- St.obs/Stmin.obs
-
 ## Produce mean predictions from growth model
 # # Empty matrix
 # St.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
 # St.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
-y = Stmin.obs
+y = dim(Stmin.obs)[1]
 
 G.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
 G.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
@@ -196,89 +167,79 @@ if(devsim[k]>devobs[k]) {pval=pval+1}
 
 pval/length(growth.params$`beta0[1]`)
 
-hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-100,100))  # first histogram
-hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-100,100), add=T)  # second
+hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-2500,-1600))  # first histogram
+hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-2500,-1600), add=T)  # second
 
 # ------------ Growth 2 model (no year effect) PPC -------------
-
-# convert 999 values back into NAs
-St1.obs <- demo.data %>% 
-  select(c(raw.data.TreeID, Year, Ht)) %>% 
-  pivot_wider(names_from = Year, values_from = Ht) %>%
-  mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
-  #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
-  pull(`2013`)
-
-## St2 is size at the last time step (year = 2018) ** best year to use for growth&data quality purposes
-St2.obs <- demo.data %>% 
-  select(c(raw.data.TreeID, Year, Ht)) %>% 
-  pivot_wider(names_from = Year, values_from = Ht) %>%
-  mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
-  #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
-  pull(`2018`)
-
-## Produce mean predictions from growth model
-# Empty matrix
-St2.yhat <- matrix(NA,length(St1.obs),length(growth.params$beta0))
-St2.mean.pred <- matrix(NA,length(St1.obs),length(growth.params$beta0))
-
-# loop over years and iterations
-for (k in 1:length(growth.params$beta0)) {
-  
-    St2.yhat[,k] <- rnorm(length(St1.obs), growth.params$beta0[k] + growth.params$beta1[k]*log(St1.obs), growth.params$sigma[k]) # process error
-    
-    St2.mean.pred[,k] <- growth.params$beta0[k] + growth.params$beta1[k]*log(St1.obs) # mean prediction
-  
-}
-
-## Calculate bayesian p value using deviance
-devsim <- rep(NA,length(growth.params$beta0))
-devobs <- rep(NA,length(growth.params$beta0))
-
-for(k in 1:length(growth.params$beta0)) {
-  
-  devsim[k] <- -2*sum(dnorm(St2.yhat[,k], St2.mean.pred[,k], growth.params$sigma[k], log = T), na.rm = T)
-  devobs[k] <- -2*sum(dnorm(log(St2.obs), St2.mean.pred[,k], growth.params$sigma[k], log = T), na.rm = T)
-  
-}
-
-pval = 0
-
-for(k in 1:length(growth.params$`beta0[1]`)) {
-  
-  if(devsim[k]>devobs[k]) {pval=pval+1}
-  
-}
-
-pval/length(growth.params$beta0)
-
-hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-200,0), main = "", xlab = "deviance")  # first histogram
-hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-200,0), add=T)  # second
+# 
+# # convert 999 values back into NAs
+# St1.obs <- demo.data %>% 
+#   select(c(raw.data.TreeID, Year, Ht)) %>% 
+#   pivot_wider(names_from = Year, values_from = Ht) %>%
+#   mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
+#   #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
+#   pull(`2013`)
+# 
+# ## St2 is size at the last time step (year = 2018) ** best year to use for growth&data quality purposes
+# St2.obs <- demo.data %>% 
+#   select(c(raw.data.TreeID, Year, Ht)) %>% 
+#   pivot_wider(names_from = Year, values_from = Ht) %>%
+#   mutate("growth" = `2018`-`2013`) %>% # create a growth variable for years that we are modeling growth
+#   #filter(growth < 0.5 & growth > -0.5) %>% # filter out individuals where growth was greater or equal to have a meter
+#   pull(`2018`)
+# 
+# ## Produce mean predictions from growth model
+# # Empty matrix
+# St2.yhat <- matrix(NA,length(St1.obs),length(growth.params$beta0))
+# St2.mean.pred <- matrix(NA,length(St1.obs),length(growth.params$beta0))
+# 
+# # loop over years and iterations
+# for (k in 1:length(growth.params$beta0)) {
+#   
+#     St2.yhat[,k] <- rnorm(length(St1.obs), growth.params$beta0[k] + growth.params$beta1[k]*log(St1.obs), growth.params$sigma[k]) # process error
+#     
+#     St2.mean.pred[,k] <- growth.params$beta0[k] + growth.params$beta1[k]*log(St1.obs) # mean prediction
+#   
+# }
+# 
+# ## Calculate bayesian p value using deviance
+# devsim <- rep(NA,length(growth.params$beta0))
+# devobs <- rep(NA,length(growth.params$beta0))
+# 
+# for(k in 1:length(growth.params$beta0)) {
+#   
+#   devsim[k] <- -2*sum(dnorm(St2.yhat[,k], St2.mean.pred[,k], growth.params$sigma[k], log = T), na.rm = T)
+#   devobs[k] <- -2*sum(dnorm(log(St2.obs), St2.mean.pred[,k], growth.params$sigma[k], log = T), na.rm = T)
+#   
+# }
+# 
+# pval = 0
+# 
+# for(k in 1:length(growth.params$`beta0[1]`)) {
+#   
+#   if(devsim[k]>devobs[k]) {pval=pval+1}
+#   
+# }
+# 
+# pval/length(growth.params$beta0)
+# 
+# hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-200,0), main = "", xlab = "deviance")  # first histogram
+# hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-200,0), add=T)  # second
 
 # ------------ Survival posterior predictive check -------------
 
-## convert 999 vals back to NAs
-Surv.obs <-  demo.data %>% 
-  select(c(raw.data.TreeID, Year, Alive)) %>%
-  # reorganize data so columns are individuals, rows are years
-  pivot_wider(names_from = raw.data.TreeID, values_from = Alive) %>%
-  # reorder rows so that years are in order
-  arrange(Year) %>%
-  # filter years to only 2013-2019 and 2022 (when data is consistent for ht)
-  filter(Year>2012&Year!=2021) %>%
-  select(-Year) %>%
-  as.matrix()
+y = dim(Surv.obs)[1]
 
-surv.yhat <- array(NA,c(length(Stmin.obs[1,]),y,length(survival.params$`beta0[1]`)))
-surv.prob <- array(NA,c(length(Stmin.obs[1,]),y,length(survival.params$`beta0[1]`)))
+surv.yhat <- array(NA,c(length(Stmin2.obs[1,]),y,length(survival.params$`beta0[1]`)))
+surv.prob <- array(NA,c(length(Stmin2.obs[1,]),y,length(survival.params$`beta0[1]`)))
 
 for (k in 1:length(survival.params$`beta0[1]`)) {
   
   for(t in 1:y) {
     
-    surv.yhat[,t,k] <- rbinom(length(Stmin.obs[1,]), size = 1, invlogit(s.beta0[k,t] + s.beta1[k,t]*log(Stmin.obs[t,])))
+    surv.yhat[,t,k] <- rbinom(length(Stmin2.obs[1,]), size = 1, invlogit(s.beta0[k,t] + s.beta1[k,t]*log(Stmin2.obs[t,])))
     
-    surv.prob[,t,k] <- invlogit(s.beta0[k,t] + s.beta1[k,t]*log(Stmin.obs[t,]))
+    surv.prob[,t,k] <- invlogit(s.beta0[k,t] + s.beta1[k,t]*log(Stmin2.obs[t,]))
     
   }
   
@@ -319,21 +280,21 @@ year.names <- c('2013' = 'V1', '2014' = 'V2', '2015' = 'V3', '2016' = 'V4', '201
 med.surv.dat <- med.Surv.prob.range %>%
   as.data.frame() %>%
   rename(all_of(year.names)) %>% # rename columns to years
-  add_column('size.tmin' = exp(log.St.min.range)) %>% # add the size.tmin column
+  add_column('size.tmin' = St.min.range) %>% # add the size.tmin column
   pivot_longer('2013':'2022', names_to = 'years', values_to = 'med.surv.prob') # pivot longer columns to years
 
 # lower credible interval
 low.surv.dat <- low.Surv.prob.range %>%
   as.data.frame() %>%
   rename(all_of(year.names)) %>% # rename columns to years
-  add_column('size.tmin' = exp(log.St.min.range)) %>% # add the size.tmin column
+  add_column('size.tmin' = St.min.range) %>% # add the size.tmin column
   pivot_longer('2013':'2022', names_to = 'years', values_to = 'low.surv.prob') # pivot longer columns to years
 
 # upper credible interval
 up.surv.dat <- up.Surv.prob.range %>%
   as.data.frame() %>%
   rename(all_of(year.names)) %>% # rename columns to years
-  add_column('size.tmin' = exp(log.St.min.range)) %>% # add the size.tmin column
+  add_column('size.tmin' = St.min.range) %>% # add the size.tmin column
   pivot_longer('2013':'2022', names_to = 'years', values_to = 'up.surv.prob') # pivot longer columns to years
 
 # merge
@@ -367,29 +328,29 @@ surv.plot.dat %>%
 dev.off()
 
 # -------- Plotting growth (ggplot2) ------------------
-tiff("figures/growth_plotted.tif",width = 5.25,height=6,units="in", res=300)
-
-# organize growth predictions
-growth.plot.dat <-
-  data.frame(
-  'size.tmin' = exp(log.St.min.range),
-  'med.pred' = exp(med.St.pred.range), # median predicted size at t
-  'low.pred' = exp(low.St.pred.range), # add the lower credible interval
-  'up.pred' = exp(up.St.pred.range))# add the upper credible interval
-
-# plot
-growth.plot.dat %>% 
-  ggplot(aes(x = size.tmin, y = med.pred)) +
-  geom_abline(lty = 2, col = 'black') +
-  geom_ribbon(aes(ymin = low.pred, ymax = up.pred), fill = '#225ea8', alpha=0.3) +
-  geom_line(aes(), lwd = 1.25, col = '#225ea8') +
-  labs(x = "size in 2013 (height in meters)", y = "size in 2018 (height in meters)") +
-  theme(
-    text = element_text(size = 22),
-    legend.key = element_rect(fill = "white"),
-    panel.background = element_rect(linetype = "solid",fill = NA),
-    panel.border = element_rect(linetype = "solid", fill = NA),
-    panel.grid.major = element_line(colour = "lightgrey", linewidth = .4)
-  )
-
-dev.off()
+# tiff("figures/growth_plotted.tif",width = 5.25,height=6,units="in", res=300)
+# 
+# # organize growth predictions
+# growth.plot.dat <-
+#   data.frame(
+#   'size.tmin' = St.min.range,
+#   'med.pred' = St.pred.range, # median predicted size at t
+#   'low.pred' = St.pred.range, # add the lower credible interval
+#   'up.pred' = St.pred.range)# add the upper credible interval
+# 
+# # plot
+# growth.plot.dat %>% 
+#   ggplot(aes(x = size.tmin, y = med.pred)) +
+#   geom_abline(lty = 2, col = 'black') +
+#   geom_ribbon(aes(ymin = low.pred, ymax = up.pred), fill = '#225ea8', alpha=0.3) +
+#   geom_line(aes(), lwd = 1.25, col = '#225ea8') +
+#   labs(x = "size in 2013 (height in meters)", y = "size in 2018 (height in meters)") +
+#   theme(
+#     text = element_text(size = 22),
+#     legend.key = element_rect(fill = "white"),
+#     panel.background = element_rect(linetype = "solid",fill = NA),
+#     panel.border = element_rect(linetype = "solid", fill = NA),
+#     panel.grid.major = element_line(colour = "lightgrey", linewidth = .4)
+#   )
+# 
+# dev.off()

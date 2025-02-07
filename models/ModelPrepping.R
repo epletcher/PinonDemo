@@ -203,7 +203,7 @@ growthfit1 <- stan(file='models/growth_years.stan', data=growthdata, chains=3, i
 
 # ------ Prep data and model Survival -------
 ## Stmin is size at the previous time step
-Stmin <- demo.data %>% 
+Stmin2.obs <- demo.data %>% 
   select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
   # reorganize data so columns are individuals, rows are years
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
@@ -215,11 +215,11 @@ Stmin <- demo.data %>%
   as.matrix()
 
 # reassign NAs as 999 (Stand doesn't accept NA's)
-Stmin[is.na(Stmin)]<-999
-St[is.na(St)]<-999
+Stmin2 <- Stmin2.obs
+Stmin2[is.na(Stmin2)]<-999
 
 ## Surv is survival at the current size step
-Surv <-  demo.data %>% 
+Surv.obs <-  demo.data %>% 
   select(c(raw.data.TreeID, Year, Alive)) %>%
   # reorganize data so columns are individuals, rows are years
   pivot_wider(names_from = raw.data.TreeID, values_from = Alive) %>%
@@ -231,12 +231,13 @@ Surv <-  demo.data %>%
   as.matrix()
 
 # reassign NAs as 999 (Stand doesn't accept NA's)
+Surv <- Surv.obs
 Surv[is.na(Surv)]<-999
 
-i = dim(Stmin)[2] # index by individuals 
-y = dim(Stmin)[1] # index by year
+i = dim(Stmin2)[2] # index by individuals 
+y = dim(Stmin2)[1] # index by year
 # specify model data
-survdata <- list(i = i, y = y, Surv = Surv, Stmin = Stmin)
+survdata <- list(i = i, y = y, Surv = Surv, Stmin2 = Stmin2)
 
 #start <- list() # specify starting values, if needed
 
