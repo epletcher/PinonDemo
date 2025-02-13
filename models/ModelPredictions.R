@@ -6,6 +6,7 @@
 library(tidyverse)
 library(rstan)
 library(shinystan)
+library(LaplacesDemon)
 
 ## load functions
 # inverse logit function
@@ -127,21 +128,24 @@ matplot(x = St.min.range, y = low.Surv.prob.range, type = "l", lty = 2, lwd = 1,
 
 ## Produce mean predictions from growth model
 # # Empty matrix
-# St.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
-# St.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+St.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+St.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+
 y = dim(Stmin.obs)[1]
 
-G.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
-G.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+# G.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+# G.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
 
 # loop over years and iterations
 for (k in 1:length(growth.params$`beta0[1]`)) {
   
   for(t in 1:y) {
     # ** calculating for direct growth model here **
-        G.yhat[t,,k] <- rnorm(length(Stmin.obs[1,]), g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]), growth.params$sigma[k]) # process error
-        
-        G.mean.pred[t,,k] <- g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]) # mean prediction
+        # G.yhat[t,,k] <- rnorm(length(Stmin.obs[1,]), g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]), growth.params$sigma[k]) # process error = normal distribution
+        #  
+        St.yhat[t,,k] <- rst(n = length(Stmin.obs[1,]), mu = g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]), sigma = growth.params$sigma[k], nu = growth.params$nu[k]) # process error = student's t
+
+        St.mean.pred[t,,k] <- g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]) # mean prediction
   }
   
 }
@@ -152,9 +156,14 @@ devobs <- rep(NA,length(growth.params$`beta0[1]`))
 
 for(k in 1:length(growth.params$`beta0[1]`)) {
   
-  devsim[k] <- -2*sum(dnorm(G.yhat[,,k], G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
-  devobs[k] <- -2*sum(dnorm(log(G.obs), G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
-  
+  # # normal dist
+  # devsim[k] <- -2*sum(dnorm(G.yhat[,,k], G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
+  # devobs[k] <- -2*sum(dnorm(log(G.obs), G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
+
+  # student's t
+  devsim[k] <- -2*sum(dst(St.yhat[,,k], St.mean.pred[,,k], growth.params$sigma[k], nu = growth.params$nu[k], log = T), na.rm = T)
+  devobs[k] <- -2*sum(dst(log(St.obs), St.mean.pred[,,k], growth.params$sigma[k], nu = growth.params$nu[k], log = T), na.rm = T)
+
 }
 
 pval = 0
@@ -167,8 +176,8 @@ if(devsim[k]>devobs[k]) {pval=pval+1}
 
 pval/length(growth.params$`beta0[1]`)
 
-hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-2500,-1600))  # first histogram
-hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-2500,-1600), add=T)  # second
+hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-2600,-1100), main = 'red = devsim, blue = devobs')  # blue
+hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-2600,-1100), add=T)  # red
 
 # ------------ Growth 2 model (no year effect) PPC -------------
 # 

@@ -119,11 +119,12 @@ demo.data %>%
 
 # building models where intercept and slope vary by year, 2013-2018 (highest quality data)
 # no data for 2020 or 2021 b/c no data collection 2020.
-# tmin is size in previous year
-# size is the current year's size
+# Stmin is size in previous year
+# St is the current year's size
 
-## Stmin is size at the previous time step
-Stmin.obs <- demo.data %>%
+## Stmin.obs is size at the previous time step
+# For Stmin we will convert NA's to 999 below 
+Stmin <- Stmin.obs <- demo.data %>%
   select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
   # reorganize data so columns are individuals, rows are years
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
@@ -135,7 +136,7 @@ Stmin.obs <- demo.data %>%
   as.matrix()
 
 ## St is size at the current size step
-St.obs <-  demo.data %>%
+St <- St.obs <-  demo.data %>%
   select(c(raw.data.TreeID, Year, Ht)) %>%
   # reorganize data so columns are individuals, rows are years
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
@@ -147,19 +148,14 @@ St.obs <-  demo.data %>%
   as.matrix()
 
 # G is the growth ratio from Stmin to St
-G.obs <- St.obs/Stmin.obs
+G <- G.obs <- St.obs/Stmin.obs
 
 # check that column names and years/rows match for St and Stmin
 colnames(St.obs)==colnames(Stmin.obs)
 
-# reassign NAs as 999 (Stand doesn't accept NA's)
-Stmin <- Stmin.obs
+# reassign NAs as 999 for versions of data that will go into the stan model (Stand doesn't accept NA's)
 Stmin[is.na(Stmin)]<-999
-
-St <- St.obs
 St[is.na(St)]<-999
-
-G <- G.obs
 G[is.na(G)]<-999
 
 
@@ -201,6 +197,7 @@ growthdata <- list(i = i, y = y, St = St, Stmin = Stmin, G=G)
 # fit growth model
 growthfit1 <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500)
 
+#
 # ------ Prep data and model Survival -------
 ## Stmin is size at the previous time step
 Stmin2.obs <- demo.data %>% 
@@ -260,13 +257,13 @@ launch_shinystan(survivalfit1)
 # put parameter estimates in a dataframe
 
 ## For gorwth by year model: growth params
-growth.params <-
+growth.params <- 
   as.matrix(growthfit1, pars = c("beta0[1]","beta0[2]","beta0[3]",
                                  "beta0[4]","beta0[5]","beta0[6]",
                                  "beta1[1]","beta1[2]","beta1[3]",
                                  "beta1[4]","beta1[5]","beta1[6]",
-                                 "sigma","beta0mu","beta1mu","tausq0",
-                                 "tausq1")) %>%
+                                 "nu", # adding 'nu' here for student's t
+                                 "sigma")) %>% 
                                     as.data.frame()
 
 # ## For single time transition model: growth params
