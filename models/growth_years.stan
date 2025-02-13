@@ -9,7 +9,7 @@ data {
 
 // The parameters accepted by the model. Our model
 parameters {
-  real nu; // DF parameter for student t's distribution that allows for fatter tails
+  //real nu; // DF parameter for student t's distribution that allows for fatter tails
   real beta0[y];
   real beta1[y];
   real<lower = 0> sigma;
@@ -29,9 +29,9 @@ model {
 
         if(St[t,j]!=999 && Stmin[t,j]!=999) { // in order to skip over NA's
 
-        //log(St[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // normal
+        log(St[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // normal
 
-         log(St[t,j]) ~ student_t(nu, beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // student's t distribution
+         // log(St[t,j]) ~ student_t(nu, beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // student's t distribution
 
         }
       }
@@ -56,7 +56,7 @@ model {
 //     }
 
   //Prior
-  nu~normal(0,10); // student's t
+  //nu~normal(0,10); // student's t
   beta0~normal(beta0mu,tausq0); 
   beta1~normal(beta1mu,tausq1); 
   sigma ~ inv_gamma(1,1);

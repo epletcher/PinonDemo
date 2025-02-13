@@ -23,9 +23,12 @@ invlogit <- function(x) {
 # Stmin = size the previous year, dimensions [y,i]
 # Surv = survival in the current year, dimensions [y,i]
 
-# Convert beta0's and beta1's from growth and survival models into matrices
-g.beta0 <- growth.params %>% select(starts_with('beta0[')) %>% as.matrix()
-g.beta1 <- growth.params %>% select(starts_with('beta1[')) %>% as.matrix()
+## Convert beta0's and beta1's from growth and survival models into matrices
+g.beta0 <- growth.params.st %>% select(starts_with('beta0[')) %>% as.matrix() # student's t params
+g.beta1 <- growth.params.st %>% select(starts_with('beta1[')) %>% as.matrix() # student's t params
+
+g.beta0 <- growth.params.norm %>% select(starts_with('beta0[')) %>% as.matrix() # norm params
+g.beta1 <- growth.params.norm %>% select(starts_with('beta1[')) %>% as.matrix() # norm params
 
 s.beta0 <- survival.params %>% select(starts_with('beta0[')) %>% as.matrix()
 s.beta1 <- survival.params %>% select(starts_with('beta1[')) %>% as.matrix()

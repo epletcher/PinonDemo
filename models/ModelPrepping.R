@@ -195,8 +195,9 @@ growthdata <- list(i = i, y = y, St = St, Stmin = Stmin, G=G)
 #start <- list() # specify starting values, if needed
 
 # fit growth model
-growthfit1 <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500)
+growth_st <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500) # student's T, you will need to update stan script to run model with right dist.
 
+growth_norm <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500) # norm, you will need to update stan script to run model with right dist.
 #
 # ------ Prep data and model Survival -------
 ## Stmin is size at the previous time step
@@ -244,7 +245,8 @@ survivalfit1 <- stan(file='models/survival.stan', data=survdata, chains=3, iter=
 
 # ------- Inspect model outputs --------
 # growth
-growthfit1 
+growth_st 
+growth_norm
 
 launch_shinystan(growthfit1)
 
@@ -257,14 +259,20 @@ launch_shinystan(survivalfit1)
 # put parameter estimates in a dataframe
 
 ## For gorwth by year model: growth params
-growth.params <- 
-  as.matrix(growthfit1, pars = c("beta0[1]","beta0[2]","beta0[3]",
+growth.params.st <- 
+  as.matrix(growth_st, pars = c("beta0[1]","beta0[2]","beta0[3]",
                                  "beta0[4]","beta0[5]","beta0[6]",
                                  "beta1[1]","beta1[2]","beta1[3]",
                                  "beta1[4]","beta1[5]","beta1[6]",
                                  "nu", # adding 'nu' here for student's t
-                                 "sigma")) %>% 
-                                    as.data.frame()
+                                 "sigma")) %>% as.data.frame()
+
+growth.params.norm <- 
+  as.matrix(growth_norm, pars = c("beta0[1]","beta0[2]","beta0[3]",
+                                "beta0[4]","beta0[5]","beta0[6]",
+                                "beta1[1]","beta1[2]","beta1[3]",
+                                "beta1[4]","beta1[5]","beta1[6]",
+                                "sigma")) %>% as.data.frame()
 
 # ## For single time transition model: growth params
 # growth.params <- 
