@@ -39,7 +39,7 @@ treeyears <- data.frame(Year = vapply(2012:2022, rep, times = length(unique(demo
 # first column is treid repeated for all years
 treeyears$raw.data.TreeID = rep(unique(demo.data$raw.data.TreeID), 11)
 
-# ------- Prep data and model Growth -------
+# ------- Prep data for growth model -------
 
 
 # building models where intercept and slope vary by year
@@ -56,12 +56,26 @@ Sz <- Sz.obs <-  treeyears %>%
   pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
   # reorder rows so that years are in order
   arrange(Year) %>%
-  # ** we can either remove any year after 2020 or we could add a place holder for 2020 into the dataset (to be filled with NAS)
   select(-Year) %>%
   as.matrix()
 
 # reassign NAs as 999 for versions of data that will go into the stan model (Stand doesn't accept NA's)
 Sz[is.na(Sz)]<-999
+
+# ------- Choose informative priors for sigo ------
+
+matplot(t(t(Sz.obs) - Sz.obs[1,]), type = 'l')
+
+demo.data %>% mutate(ann.growth = Ht - Ht.t.min.1) %>% ggplot(aes(x = ann.growth)) + geom_histogram() 
+
+# choose and informative prior for the inverse gamma, for sigma.obs? 
+
+mu = mean(demo.data$Ht - demo.data$Ht.t.min.1, na.rm = T)
+sig2 = 0.19^2
+
+beta = mu*(mu^2/sig2+1)
+alpha = mu^2/sig2 + 2
+# ------------ Run STAN model -------------
 
 # specify model data
 # i = length(St1) # index by individuals

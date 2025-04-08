@@ -45,7 +45,7 @@ matrix[y,i] Szl; //latent size at t
   beta0~normal(beta0mu,tausq0); 
   beta1~normal(beta1mu,tausq1); 
   sigp ~ inv_gamma(1,1);
-  sigo ~ inv_gamma(1,1); // we will want to give this an informative prior based on biologically reasonable annual change is size, as a percent of the size
+  sigo ~ inv_gamma(2,0.01); // we will want to give this an informative prior based on biologically reasonable annual change is size, as a percent of the size
   
   // hyper priors
   beta0mu ~ normal(0,10);
