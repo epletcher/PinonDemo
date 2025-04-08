@@ -122,41 +122,41 @@ demo.data %>%
 # Stmin is size in previous year
 # St is the current year's size
 
-## Stmin.obs is size at the previous time step
-# For Stmin we will convert NA's to 999 below 
-Stmin <- Stmin.obs <- demo.data %>%
-  select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
-  # reorganize data so columns are individuals, rows are years
-  pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
-  # reorder rows so that years are in order
-  arrange(Year) %>%
-  # filter years to only 2013-2018 (when data is consistent for height, and before 2019, when there were errors in the data)
-  filter(Year>2012&Year<2019) %>%
-  select(-Year) %>%
-  as.matrix()
-
-## St is size at the current size step
-St <- St.obs <-  demo.data %>%
-  select(c(raw.data.TreeID, Year, Ht)) %>%
-  # reorganize data so columns are individuals, rows are years
-  pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
-  # reorder rows so that years are in order
-  arrange(Year) %>%
-  # filter years to only 2013-2019 and 2022 (when data is consistent for ht)
-  filter(Year>2012&Year<2019) %>%
-  select(-Year) %>%
-  as.matrix()
-
-# G is the growth ratio from Stmin to St
-G <- G.obs <- St.obs/Stmin.obs
-
-# check that column names and years/rows match for St and Stmin
-colnames(St.obs)==colnames(Stmin.obs)
-
-# reassign NAs as 999 for versions of data that will go into the stan model (Stand doesn't accept NA's)
-Stmin[is.na(Stmin)]<-999
-St[is.na(St)]<-999
-G[is.na(G)]<-999
+# ## Stmin.obs is size at the previous time step
+# # For Stmin we will convert NA's to 999 below 
+# Stmin <- Stmin.obs <- demo.data %>%
+#   select(c(raw.data.TreeID, Year, Ht.t.min.1)) %>%
+#   # reorganize data so columns are individuals, rows are years
+#   pivot_wider(names_from = raw.data.TreeID, values_from = Ht.t.min.1) %>%
+#   # reorder rows so that years are in order
+#   arrange(Year) %>%
+#   # filter years to only 2013-2018 (when data is consistent for height, and before 2019, when there were errors in the data)
+#   filter(Year>2012&Year<2019) %>%
+#   select(-Year) %>%
+#   as.matrix()
+# 
+# ## St is size at the current size step
+# St <- St.obs <-  demo.data %>%
+#   select(c(raw.data.TreeID, Year, Ht)) %>%
+#   # reorganize data so columns are individuals, rows are years
+#   pivot_wider(names_from = raw.data.TreeID, values_from = Ht) %>%
+#   # reorder rows so that years are in order
+#   arrange(Year) %>%
+#   # filter years to only 2013-2019 and 2022 (when data is consistent for ht)
+#   filter(Year>2012&Year<2019) %>%
+#   select(-Year) %>%
+#   as.matrix()
+# 
+# # G is the growth ratio from Stmin to St
+# G <- G.obs <- St.obs/Stmin.obs
+# 
+# # check that column names and years/rows match for St and Stmin
+# colnames(St.obs)==colnames(Stmin.obs)
+# 
+# # reassign NAs as 999 for versions of data that will go into the stan model (Stand doesn't accept NA's)
+# Stmin[is.na(Stmin)]<-999
+# St[is.na(St)]<-999
+# G[is.na(G)]<-999
 
 
 # ## St1 is size at the first time step (year = 2013) ** best year to use for growth&data quality purposes
@@ -183,21 +183,21 @@ G[is.na(G)]<-999
 # St2[is.na(St2)]<-999
 # G1[is.na(G1)]<-999
 
-# specify model data
-# i = length(St1) # index by individuals
-i = dim(St)[2] # index by individuals
-y = dim(St)[1] # index by year
-
-# specify model data
-growthdata <- list(i = i, y = y, St = St, Stmin = Stmin, G=G)
-# growthdata <- list(i = i, St1 = St1, St2 = St2, G1 = G1)
-
-#start <- list() # specify starting values, if needed
-
-# fit growth model
-growth_st <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500) # student's T, you will need to update stan script to run model with right dist.
-
-growth_norm <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500) # norm, you will need to update stan script to run model with right dist.
+# # specify model data
+# # i = length(St1) # index by individuals
+# i = dim(St)[2] # index by individuals
+# y = dim(St)[1] # index by year
+# 
+# # specify model data
+# growthdata <- list(i = i, y = y, St = St, Stmin = Stmin, G=G)
+# # growthdata <- list(i = i, St1 = St1, St2 = St2, G1 = G1)
+# 
+# #start <- list() # specify starting values, if needed
+# 
+# # fit growth model
+# growth_st <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500) # student's T, you will need to update stan script to run model with right dist.
+# 
+# growth_norm <- stan(file='models/growth_years.stan', data=growthdata, chains=3, iter=3000, warmup=1500) # norm, you will need to update stan script to run model with right dist.
 #
 # ------ Prep data and model Survival -------
 ## Stmin is size at the previous time step
