@@ -2,7 +2,9 @@
 data {
   int<lower=0> i; // individual
   int<lower=0> y; // time / year
+  int<lower=0> d; // length = 2, contains census start and end year
   matrix[y,i] Sz; //size at t
+  matrix[i,d] tcy; // census end points dataframe
 }
 
 // The parameters accepted by the model. Our model
@@ -26,13 +28,14 @@ model {
 matrix[y,i] Szl; //latent size at t
 
 
-    for(t in 2:y) { //start year 2, fill blank matrix for first year's value
+for(j in 1:i) {
 
-      for(j in 1:i) {
+//start year that the tree first shows up (enters the census), end the year the tree dies (leaves the census for good), fill blank matrix for first year's value
+    for(t in tcy[j,1]+1:tcy[j,2]) { 
 
-        if(Sz[t,j]!=999 && Sz[t-1,j]!=999) { // in order to skip over NA's, I'm a little confesued by 
-
-        log(Szl[t,j]) ~ normal(beta0[t] + beta1[t]*log(Szl[t-1,j]), sigp);
+        log(Szl[t,j]) ~ normal(beta0[t] + beta1[t]*log(Szl[t-1,j]), sigp); // NA/-99 values will be kind of crazy b/c we arent removing them here
+        
+        if(Sz[t,j]!=-99) { // in order to skip over NA's, only need to do this for the data model
         
         Sz[t,j] ~ normal(Szl[t,j], sigo);
 
@@ -42,10 +45,10 @@ matrix[y,i] Szl; //latent size at t
 
  
   //Prior
-  beta0~normal(beta0mu,tausq0); 
-  beta1~normal(beta1mu,tausq1); 
-  sigp ~ inv_gamma(1,1);
-  sigo ~ inv_gamma(2,0.01); // we will want to give this an informative prior based on biologically reasonable annual change is size, as a percent of the size
+  beta0 ~ normal(beta0mu,tausq0); 
+  beta1 ~ normal(beta1mu,tausq1); 
+  sigp ~ normal(0.102,0.01) T[0,] ;// informative prior based on biologically reasonable annual growth
+  sigo ~ inv_gamma(1,1); 
   
   // hyper priors
   beta0mu ~ normal(0,10);

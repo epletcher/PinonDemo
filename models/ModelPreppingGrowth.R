@@ -46,7 +46,7 @@ treeyears$raw.data.TreeID = rep(unique(demo.data$raw.data.TreeID), 11)
 # no data for 2020 or 2021 b/c no data collection 2020.
 # Sz is dataframe of [year, individual]
 
-## Sz is size at the current time step (NAs will be reassigned to 999)
+## Sz is size at the current time step (NAs will be reassigned to -99)
 ## SZ is size at the current time step (NAs = NAs)
 Sz <- Sz.obs <-  treeyears %>%
   mutate(Year = as.integer(Year)) %>%
@@ -59,22 +59,57 @@ Sz <- Sz.obs <-  treeyears %>%
   select(-Year) %>%
   as.matrix()
 
-# reassign NAs as 999 for versions of data that will go into the stan model (Stand doesn't accept NA's)
-Sz[is.na(Sz)]<-999
+# reassign NAs as -99 for versions of data that will go into the stan model (Stand doesn't accept NA's)
+Sz[is.na(Sz)]<- -99
 
-# ------- Choose informative priors for sigo ------
+# ------ Prep census endpoints data frame --------
 
-matplot(t(t(Sz.obs) - Sz.obs[1,]), type = 'l')
+## for every tree i the year it first entered the census and then last year in the census
 
-demo.data %>% mutate(ann.growth = Ht - Ht.t.min.1) %>% ggplot(aes(x = ann.growth)) + geom_histogram() 
+# treeid, startyear, end year
+tcy <- matrix(NA,length(unique(demo.data$raw.data.TreeID)),3)
 
-# choose and informative prior for the inverse gamma, for sigma.obs? 
+# pull survival data
+tree.surv <- treeyears %>%
+  mutate(Year = as.integer(Year)) %>%
+  full_join(., demo.data) %>%
+  select(c(raw.data.TreeID, Year, Alive)) %>%
+  pivot_wider(names_from = raw.data.TreeID, values_from = Alive) %>%
+  # reorder rows so that years are in order
+  arrange(Year)%>%
+  as.matrix()
 
-mu = mean(demo.data$Ht - demo.data$Ht.t.min.1, na.rm = T)
-sig2 = 0.19^2
+for(i in 1:length(unique(demo.data$raw.data.TreeID))) {
+  
+  # look at survival for birth and death years
+  ind.tree.surv <- tree.surv[,c(1,i+1)]
+  
+  # add tree name
+  tcy[i,1] <- colnames(ind.tree.surv)[2]
+  
+  # first year of census
+  tcy[i,2] <- ind.tree.surv[which(ind.tree.surv[,2]==1),1][1]
+  
+  # last year of census (because it died)
+  if(any(ind.tree.surv[,2]%in%0)) {
+    
+    tcy[i,3] <- ind.tree.surv[which(ind.tree.surv[,2]==0),1]
+    
+  }
+  
+# last year of census (it lived the whole time)
+  if(is.na(ind.tree.surv[11,2])==F) {
 
-beta = mu*(mu^2/sig2+1)
-alpha = mu^2/sig2 + 2
+    tcy[i,3] <- 2022
+
+  }
+}
+
+# ------- remove trees that are completely NA's the whole time?-------
+
+length(which(is.na(tcy[,2])))
+length(which(is.na(tcy[,3])))
+
 # ------------ Run STAN model -------------
 
 # specify model data
