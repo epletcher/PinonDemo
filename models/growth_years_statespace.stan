@@ -2,9 +2,9 @@
 data {
   int<lower=0> i; // individual
   int<lower=0> y; // time / year
-  int<lower=0> d; // length = 2, contains census start and end year
+  int<lower=0> c; // length = 2, contains census start and end year
   matrix[y,i] Sz; //size at t
-  matrix[i,d] tcy; // census end points dataframe
+  int tcy[i,c]; // census begin/end points indexing 
 }
 
 // The parameters accepted by the model. Our model

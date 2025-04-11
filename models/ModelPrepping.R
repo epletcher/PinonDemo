@@ -9,8 +9,14 @@ library(cowplot)
 ## load demo data
 demo.data <- read.csv("cleaned_demo_data.csv")
 
-# remove outlier (just removing entire tree's row for now)
-demo.data <- demo.data[-which(demo.data$CanDiam2==22.40),]
+## EXTRA DATA CLEAN UP
+
+# not removing this anymore b/c height data is fine
+# # remove outlier (just removing entire tree's row for now)
+# demo.data <- demo.data[-which(demo.data$CanDiam2==22.40),]
+
+# remove tree that is not in the plot (size only measured for one year)
+demo.data <- demo.data[-which(demo.data$raw.data.TreeID=="PJControl . Left . 72 . 35"),]
 
 # ------ Add a few more columns ---------
 
@@ -21,13 +27,7 @@ demo.data <- demo.data %>%
   
   # unique plotID 'plot_id' (transect + plot_distance)
   unite(col = "plot_id", c(Transect, Plot_distance), sep = ".", remove = FALSE) 
-  # 
-  # # add columns for size.sq
-  # mutate("CanDiam1.tmin.1.sq" = CanDiam1.tmin.1^2) %>%
-  # mutate("CanDiam2.tmin.1.sq" = CanDiam1.tmin.1^2) %>%
-  # mutate("Ht.t.min.1.sq" = Ht.t.min.1^2) %>%
-  # mutate("DBH.tmin.1.sq" = DBH.tmin.1^2)
-
+ 
 # ------- plot growth --------
 
 ## Check for annual growth outliers

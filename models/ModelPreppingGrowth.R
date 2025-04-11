@@ -8,8 +8,14 @@ library(shinystan)
 
 demo.data <- read.csv("cleaned_demo_data.csv")
 
-# remove outlier (just removing entire tree's row for now)
-demo.data <- demo.data[-which(demo.data$CanDiam2==22.40),]
+## EXTRA DATA CLEAN UP
+
+# not removing this anymore b/c height data is fine
+# # remove outlier (just removing entire tree's row for now)
+# demo.data <- demo.data[-which(demo.data$CanDiam2==22.40),]
+
+# remove tree that is not in the plot (size only measured for one year)
+demo.data <- demo.data[-which(demo.data$raw.data.TreeID=="PJControl . Left . 72 . 35"),]
 
 # ------ Add a few more columns ---------
 
@@ -47,8 +53,8 @@ treeyears$raw.data.TreeID = rep(unique(demo.data$raw.data.TreeID), 11)
 # Sz is dataframe of [year, individual]
 
 ## Sz is size at the current time step (NAs will be reassigned to -99)
-## SZ is size at the current time step (NAs = NAs)
-Sz <- Sz.obs <-  treeyears %>%
+## SZ.obs is size at the current time step (NAs = NAs)
+Sz <- Sz.obs <- treeyears %>%
   mutate(Year = as.integer(Year)) %>%
   full_join(., demo.data) %>%
   select(c(raw.data.TreeID, Year, Ht)) %>%
@@ -59,15 +65,15 @@ Sz <- Sz.obs <-  treeyears %>%
   select(-Year) %>%
   as.matrix()
 
+# remove trees that have no size measurements for the entire time period
+Sz <- Sz.obs <- Sz[,colSums(is.na(Sz))<nrow(Sz)]
+
 # reassign NAs as -99 for versions of data that will go into the stan model (Stand doesn't accept NA's)
 Sz[is.na(Sz)]<- -99
 
 # ------ Prep census endpoints data frame --------
 
 ## for every tree i the year it first entered the census and then last year in the census
-
-# treeid, startyear, end year
-tcy <- matrix(NA,length(unique(demo.data$raw.data.TreeID)),3)
 
 # pull survival data
 tree.surv <- treeyears %>%
@@ -79,7 +85,14 @@ tree.surv <- treeyears %>%
   arrange(Year)%>%
   as.matrix()
 
-for(i in 1:length(unique(demo.data$raw.data.TreeID))) {
+# remove trees that have no size measurements for the entire time period
+tree.surv <- tree.surv[,colSums(is.na(tree.surv))<nrow(tree.surv)]
+
+# treeid, startyear, end year
+tcy <- matrix(NA,dim(tree.surv)[2]-1,3)
+
+
+for(i in 1:dim(tree.surv)[2]-1) {
   
   # look at survival for birth and death years
   ind.tree.surv <- tree.surv[,c(1,i+1)]
@@ -90,10 +103,10 @@ for(i in 1:length(unique(demo.data$raw.data.TreeID))) {
   # first year of census
   tcy[i,2] <- ind.tree.surv[which(ind.tree.surv[,2]==1),1][1]
   
-  # last year of census (because it died)
+  # last year of census (because it died the following year)
   if(any(ind.tree.surv[,2]%in%0)) {
     
-    tcy[i,3] <- ind.tree.surv[which(ind.tree.surv[,2]==0),1]
+    tcy[i,3] <- ind.tree.surv[which(ind.tree.surv[,2]==0)-1,1]
     
   }
   
@@ -105,10 +118,14 @@ for(i in 1:length(unique(demo.data$raw.data.TreeID))) {
   }
 }
 
-# ------- remove trees that are completely NA's the whole time?-------
+## checking indexing is right
+colnames(Sz)==tcy[,1]
 
-length(which(is.na(tcy[,2])))
-length(which(is.na(tcy[,3])))
+# remove treenames, convert to numeric
+tcy <- tcy[,-1]
+tcy <- apply(tcy, 2, as.integer)
+# change years from calendar to relative years 
+tcy <- tcy - 2011
 
 # ------------ Run STAN model -------------
 
@@ -116,12 +133,14 @@ length(which(is.na(tcy[,3])))
 # i = length(St1) # index by individuals
 i = dim(Sz)[2] # index by individuals
 y = dim(Sz)[1] # index by year
+c = dim(tcy)[2] # census endpoints
 
 # specify model data
-growthdata <- list(i = i, y = y, Sz = Sz)
+growthdata <- list(i = i, y = y, c = c, tcy = tcy, Sz = Sz)
 
 #start <- list() # specify starting values, if needed
 
 # fit growth model
 growth_ss <- stan(file='models/growth_years_statespace.stan', data=growthdata, chains=3, iter=3000, warmup=1500) 
 
+fit(growth_ss)
