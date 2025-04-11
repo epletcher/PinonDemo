@@ -65,8 +65,8 @@ Sz <- Sz.obs <- treeyears %>%
   select(-Year) %>%
   as.matrix()
 
-# remove trees that have no size measurements for the entire time period
-Sz <- Sz.obs <- Sz[,colSums(is.na(Sz))<nrow(Sz)]
+# remove trees that have no size measurements for the entire time period OR only 1 size measurement
+Sz <- Sz.obs <- Sz[,colSums(is.na(Sz))<(nrow(Sz)-1)]
 
 # reassign NAs as -99 for versions of data that will go into the stan model (Stand doesn't accept NA's)
 Sz[is.na(Sz)]<- -99
@@ -85,8 +85,8 @@ tree.surv <- treeyears %>%
   arrange(Year)%>%
   as.matrix()
 
-# remove trees that have no size measurements for the entire time period
-tree.surv <- tree.surv[,colSums(is.na(tree.surv))<nrow(tree.surv)]
+# column tree names should match Sz (remove trees that have no size measurements for the entire time period OR only 1 size) measurement
+tree.surv <- tree.surv[,c('Year',colnames(Sz))]
 
 # treeid, startyear, end year
 tcy <- matrix(NA,dim(tree.surv)[2]-1,3)
@@ -138,9 +138,11 @@ c = dim(tcy)[2] # census endpoints
 # specify model data
 growthdata <- list(i = i, y = y, c = c, tcy = tcy, Sz = Sz)
 
-#start <- list() # specify starting values, if needed
+start <- list(list("beta0"=rep(0,y),"beta1"=rep(1,y)),
+              list("beta0"=rep(0,y),"beta1"=rep(1,y)),
+              list("beta0"=rep(0,y),"beta1"=rep(1,y))) # specify starting values, if needed
 
 # fit growth model
 growth_ss <- stan(file='models/growth_years_statespace.stan', data=growthdata, chains=3, iter=3000, warmup=1500) 
 
-fit(growth_ss)
+growth_ss
