@@ -18,20 +18,17 @@ parameters {
   real<lower = 0> tausq0;
   real<lower = 0> tausq1;
   
+  matrix[y,i] Szl; //latent size at t
   
 }
 
 // model current size
 model {
 
-//declare objects
-matrix[y,i] Szl; //latent size at t
-
-
 for(j in 1:i) {
 
 //start year that the tree first shows up (enters the census), end the year the tree dies (leaves the census for good), fill blank matrix for first year's value
-    for(t in tcy[j,1]+1:tcy[j,2]) { 
+    for(t in (tcy[j,1]+1):tcy[j,2]) { 
 
         log(Szl[t,j]) ~ normal(beta0[t] + beta1[t]*log(Szl[t-1,j]), sigp); // NA/-99 values will be kind of crazy b/c we arent removing them here
         
@@ -47,7 +44,7 @@ for(j in 1:i) {
   //Prior
   beta0 ~ normal(beta0mu,tausq0); 
   beta1 ~ normal(beta1mu,tausq1); 
-  sigp ~ normal(0.102,0.01) T[0,] ;// informative prior based on biologically reasonable annual growth
+  sigp ~ normal(0.102,0.01) T[0,]; // how do i put this on the log-scale??? do i just log the mean and variance for sig p that we calculated using the raw data? informative prior based on biologically reasonable annual growth
   sigo ~ inv_gamma(1,1); 
   
   // hyper priors
