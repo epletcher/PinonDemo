@@ -44,7 +44,7 @@ for(j in 1:i) {
   //Prior
   beta0 ~ normal(beta0mu,tausq0); 
   beta1 ~ normal(beta1mu,tausq1); 
-  sigp ~ normal(0.05,.1) T[0,]; //  informative prior based on biologically reasonable annual growth
+  sigp ~ normal(0.05,.01) T[0,]; //  informative prior based on biologically reasonable annual growth (need to try constraining more, tried 1, then 0.1, now 0.01)
   sigo ~ inv_gamma(1,1); 
   
   // hyper priors
