@@ -144,6 +144,7 @@ start <- list(list("Szl"=log(Szl.init)),
               list("Szl"=log(Szl.init)))
 
 # fit growth model
+options(mc.cores = parallel::detectCores())
 growth_ss <- stan(file='models/growth_years_statespace.stan', data=growthdata, init = start, chains=3, iter=3000, warmup=1500) 
 
 growth_ss
