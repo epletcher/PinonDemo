@@ -10,8 +10,10 @@ data {
 // The parameters accepted by the model. Our model
 parameters {
   //real nu; // DF parameter for student t's distribution that allows for fatter tails
-  real beta0[y];
-  real beta1[y];
+  //real beta0[y]; // year effect
+  //real beta1[y]; // year effect
+  real beta0; // no year effect
+  real beta1; // no year effect
   real<lower = 0> sigma;
   real beta0mu;
   real beta1mu;
@@ -28,10 +30,12 @@ model {
       for(j in 1:i) {
 
         if(St[t,j]!=999 && Stmin[t,j]!=999) { // in order to skip over NA's
+        
+        log(St[t,j]) ~ normal(beta0 + beta1*log(Stmin[t,j]), sigma); // normal, w/o year effect
 
-        log(St[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // normal
+        // log(St[t,j]) ~ normal(beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // normal, w year effect
 
-         // log(St[t,j]) ~ student_t(nu, beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // student's t distribution
+        // log(St[t,j]) ~ student_t(nu, beta0[t] + beta1[t]*log(Stmin[t,j]), sigma); // student's t distribution
 
         }
       }
