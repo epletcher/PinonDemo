@@ -145,6 +145,9 @@ start <- list(list("Szl"=log(Szl.init)),
 
 # fit growth model
 options(mc.cores = parallel::detectCores())
-growth_ss <- stan(file='models/growth_years_statespace.stan', data=growthdata, init = start, chains=3, iter=3000, warmup=1500) 
+growth_ss <- stan(file='models/growth_years_statespace.stan', data=growthdata, init = start, chains=3, iter=6000, warmup=3000) 
 
 growth_ss
+
+# save workspace to google drive 
+save.image(file = "G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/growth_statespace_model.RData")

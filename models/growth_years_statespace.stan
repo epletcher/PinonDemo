@@ -57,3 +57,4 @@ for(j in 1:i) {
   tausq0 ~ inv_gamma(1,1);
   tausq1 ~ inv_gamma(1,1);
   }
+  
