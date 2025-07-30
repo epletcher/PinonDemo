@@ -15,10 +15,10 @@ parameters {
   real beta1; // w/o year effect
   real<lower = 0> sigp;
   real<lower = 0> sigo;
-  real beta0mu;
-  real beta1mu;
-  real<lower = 0> tausq0;
-  real<lower = 0> tausq1;
+  // real beta0mu;
+  // real beta1mu;
+  // real<lower = 0> tausq0;
+  // real<lower = 0> tausq1;
   
   matrix[y,i] Szl; //latent size at t
   
@@ -46,15 +46,15 @@ for(j in 1:i) {
 
  
   //Prior
-  beta0 ~ normal(beta0mu,tausq0); 
-  beta1 ~ normal(beta1mu,tausq1); 
+  beta0 ~ normal(0,10); 
+  beta1 ~ normal(1,10); 
   sigp ~ normal(0.05,.001) T[0,]; //  informative prior based on biologically reasonable annual growth (need to try constraining more, tried 1, then 0.1, now 0.01, now 0.001)
   sigo ~ inv_gamma(1,1); 
   
   // hyper priors
-  beta0mu ~ normal(0,10);
-  beta1mu ~ normal(1,10);
-  tausq0 ~ inv_gamma(1,1);
-  tausq1 ~ inv_gamma(1,1);
+  // beta0mu ~ normal(0,10);
+  // beta1mu ~ normal(1,10);
+  // tausq0 ~ inv_gamma(1,1);
+  // tausq1 ~ inv_gamma(1,1);
   }
   
