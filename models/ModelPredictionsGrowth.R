@@ -1,7 +1,7 @@
 ## set working directory to 'PinonDemo'
 
 ## load model fitting workspace generated from 'ModelPreppingGrowth'
-# contains the fit 'growth_years_statespace.stan' growth model
+# contains the fit 'PinonDemo/models/growth_years_statespace.stan' growth model
 # for Bob and Elise this is located here: 
 # SEV_PJ_Demo/model_output_workspaces/growth_statespace_model.RData
 
@@ -17,7 +17,7 @@ library(shinystan)
 growth.params.ss <- 
   as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.frame()
 
-Szl <- extract(growth_ss, pars = 'Szl')[[1]] # latent sizes
+Szl <- rstan::extract(growth_ss, pars = 'Szl')[[1]] # latent sizes
 
 ## Re-assign NA's to any latent values outside of the census endpoints
 
@@ -50,6 +50,7 @@ matplot(exp(med.Szl), type = "l", lty = 1, col = rgb(red = 0, green = 0.5, blue 
 # observed growth
 matplot(Sz.obs, type = "l", lty = 1, col = rgb(red = 0, green = 0.5, blue = 0.6, alpha = 0.6))
 
+# latent growth overlayed on observed growth (for a few trees)
 plot(Sz.obs[,1], ylim = c(0,7), pch = 16)
 lines(exp(med.Szl[,1]))
 lines(exp(lo.Szl[,1]), lty = 2)
@@ -86,10 +87,28 @@ for(k in 1:dim(Szl.filt)[1]) {
   
 }
 
-# remove first year
-Sz.pred<-Sz.pred[,2:11,]    
+# credible intervals and median predictions for plottting
+med.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = median)
+lo.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.05, na.rm = T)
+hi.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.95, na.rm = T)
+ 
 #
-# --------------- PLOT PREDICTIONS AGAINST LATENT STATES -----------
+# ----------- PLOT PREDICTIONS -----------
 
-plot(Sz.pred[50,,],exp(Szl.filt[50,2:11,])) # picking a random iteration
+# plot predictions against latent states
+plot(Sz.pred[50,,],exp(Szl.filt[50,,])) # picking a random iteration
+
+# plot predictions on top of observed sizes for a handful of trees
+plot(Sz.obs[,1], ylim = c(0,7), pch = 16)
+lines(med.Sz[,1])
+lines(lo.Sz[,1], lty = 2)
+lines(hi.Sz[,1], lty = 2)
+points(Sz.obs[,26], col = 'coral', pch = 16)
+lines(med.Sz[,26], col = 'coral')
+lines(lo.Sz[,26], lty = 2, col = 'coral')
+lines(hi.Sz[,26], lty = 2, col = 'coral')
+points(Sz.obs[,3], col = 'purple', pch = 16)
+lines(med.Sz[,3], col = 'purple')
+lines(lo.Sz[,3], lty = 2, col = 'purple')
+lines(hi.Sz[,3], lty = 2, col = 'purple')
 
