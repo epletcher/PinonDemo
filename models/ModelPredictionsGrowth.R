@@ -75,13 +75,13 @@ lines(exp(hi.Szl[,3]), lty = 2, col = 'purple')
 Sz.pred <- array(NA,c(dim(Szl.filt)[1],dim(Szl.filt)[2],dim(Szl.filt)[3]))
 
 # loop over iterations, and through years
-
+# ** process error is not propagaed in this current form, latent size at t-1 is used each year to predict size the next year, not the new predictions
 for(k in 1:dim(Szl.filt)[1]) {
   
   for(t in 2:dim(Szl.filt)[2]) { 
     
-    # using latent size at t-1, and sigO to generate predictions here
-    Sz.pred[k,t,] <- rnorm(dim(Szl.filt)[3], exp(growth.params.ss$beta0[k] + growth.params.ss$beta1[k]*Szl.filt[k,t-1,]), growth.params.ss$sigo[k]) # eponentiate
+    # using latent size at t-1, and sigp to generate predictions here
+    Sz.pred[k,t,] <- rnorm(dim(Szl.filt)[3], exp(growth.params.ss$beta0[k] + growth.params.ss$beta1[k]*Szl.filt[k,t-1,]), growth.params.ss$sigp[k]) # eponentiate
     
   }
   
