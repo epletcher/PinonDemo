@@ -1,7 +1,7 @@
 ## set working directory to 'PinonDemo'
 
 ## load model fitting workspace generated from 'ModelPreppingGrowth'
-# contains the fit 'PinonDemo/models/growth_years_statespace.stan' growth model
+# contains the fit ss growth model 'PinonDemo/models/growth_years_statespace.stan'
 # for Bob and Elise this is located here: 
 # SEV_PJ_Demo/model_output_workspaces/growth_statespace_model.RData
 
@@ -111,4 +111,75 @@ points(Sz.obs[,3], col = 'purple', pch = 16)
 lines(med.Sz[,3], col = 'purple')
 lines(lo.Sz[,3], lty = 2, col = 'purple')
 lines(hi.Sz[,3], lty = 2, col = 'purple')
+
+#
+# --------- POSTERIOR PREDICTIVE CHECK -------------
+
+## simulate new data
+# data are simulated using estimated latent states and all iterations of fit model
+Sz.sim <- array(NA,c(dim(Szl.filt)[1],dim(Szl.filt)[2],dim(Szl.filt)[3]))
+
+# simulate data across all model iterations
+for(k in 1:dim(Szl.filt)[1]) {
+    
+    # using latent size at t-1, and sigp to generate predictions here
+    Sz.sim[k,,] <- rnorm(,Szl.filt[k,,],growth.params.ss$sigo[k]) # eponentiate
+    
+  }
+  
+
+# ---- ** adapt this code from non-ss version of model for the ss one ** ----
+
+## Produce mean predictions from growth model
+# # Empty matrix
+St.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+St.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+
+y = dim(Stmin.obs)[1]
+
+# G.yhat <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+# G.mean.pred <- array(NA,c(y,length(Stmin.obs[1,]),length(growth.params$`beta0[1]`)))
+
+# loop over years and iterations
+for (k in 1:length(growth.params$`beta0[1]`)) {
+  
+  for(t in 1:y) {
+    # ** calculating for direct growth model here **
+    # G.yhat[t,,k] <- rnorm(length(Stmin.obs[1,]), g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]), growth.params$sigma[k]) # process error = normal distribution
+    #  
+    St.yhat[t,,k] <- rst(n = length(Stmin.obs[1,]), mu = g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]), sigma = growth.params$sigma[k], nu = growth.params$nu[k]) # process error = student's t
+    
+    St.mean.pred[t,,k] <- g.beta0[k,t] + g.beta1[k,t]*log(Stmin.obs[t,]) # mean prediction
+  }
+  
+}
+
+## Calculate bayesian p value using deviance
+devsim <- rep(NA,length(growth.params$`beta0[1]`))
+devobs <- rep(NA,length(growth.params$`beta0[1]`))
+
+for(k in 1:length(growth.params$`beta0[1]`)) {
+  
+  # # normal dist
+  # devsim[k] <- -2*sum(dnorm(G.yhat[,,k], G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
+  # devobs[k] <- -2*sum(dnorm(log(G.obs), G.mean.pred[,,k], growth.params$sigma[k], log = T), na.rm = T)
+  
+  # student's t
+  devsim[k] <- -2*sum(dst(St.yhat[,,k], St.mean.pred[,,k], growth.params$sigma[k], nu = growth.params$nu[k], log = T), na.rm = T)
+  devobs[k] <- -2*sum(dst(log(St.obs), St.mean.pred[,,k], growth.params$sigma[k], nu = growth.params$nu[k], log = T), na.rm = T)
+  
+}
+
+pval = 0
+
+for(k in 1:length(growth.params$`beta0[1]`)) {
+  
+  if(devsim[k]>devobs[k]) {pval=pval+1}
+  
+}
+
+pval/length(growth.params$`beta0[1]`)
+
+hist(devobs, col=rgb(0,0,1,1/4), xlim = c(-2600,-1100), main = 'red = devsim, blue = devobs')  # blue
+hist(devsim, col=rgb(1,0,0,1/4), xlim = c(-2600,-1100), add=T)  # red
 
