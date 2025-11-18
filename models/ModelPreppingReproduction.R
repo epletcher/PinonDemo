@@ -12,16 +12,16 @@ library(cowplot)
 
 ## extract parameters from ss growth model
 # (no year effect here)
-growth.params.ss <- 
-  as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.frame()
+gp <- as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.frame()
 
 # ------- Load cone production and height of masting trees ---------
 
-reprodat <- read.csv("cleaned_cone_prod_data.csv")
+reprodat <- read.csv("cleaned_cone_prod_data.csv") 
 
 # cp is cone production across trees and years [year,tree]
 cp.obs<-cp <- reprodat %>% select(c(Fruit_Count,Year,Field_ID)) %>% 
   pivot_wider(names_from = Field_ID, values_from = Fruit_Count) %>% 
+  add_row(Year = 2024) %>% 
   select(-Year)
 
 
@@ -29,16 +29,26 @@ cp[is.na(cp)]<-999 # for running STAN, convert NAs to 999 value
 
 # ----- estimate past size of mast trees using growth model
 
+
+# make this a matrix of [year,tree]
+Sz.obs <- reprodat %>% 
+  rename(height = tree_height_2024) %>% 
+  select(c(Field_ID,height,Year)) %>%
+  pivot_wider(names_from = Field_ID, values_from = height) %>%
+  add_row(Year = 2024)
+
+# ** editing here **
 # ** i forget, do we want to include process error (or obs error) here?
 
-for (i in 1:length(growth_ss$beta0)) {
+for (i in 1:length(gp$beta0)) {
   
-  log(Sz)
+  for(t in 1:length(Sz.obs[1]))
+  
+  log(Sz)-gp$beta0)/gp$beta1 
   
 }
 
-
-Sz # make this a matrix of [year,tree]
+Sz<-Sz.obs
 
 Sz[is.na(St)]<-999
 
