@@ -5,29 +5,44 @@ library(cowplot)
 
 ## set workspace to 'PinonDemo' folder/repository
 
+## load model fitting workspace generated from 'ModelPreppingGrowth'
+# contains the fit ss growth model 'PinonDemo/models/growth_years_statespace.stan'
+# for Bob and Elise this is located here: 
+# SEV_PJ_Demo/model_output_workspaces/growth_statespace_model.RData
+
+## extract parameters from ss growth model
+# (no year effect here)
+growth.params.ss <- 
+  as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.frame()
+
 # ------- Load cone production and height of masting trees ---------
 
 reprodat <- read.csv("cleaned_cone_prod_data.csv")
 
-# ------- FIT REPRODUCTION MODEL IN STAN -----
+# cp is cone production across trees and years [year,tree]
+cp.obs<-cp <- reprodat %>% select(c(Fruit_Count,Year,Field_ID)) %>% 
+  pivot_wider(names_from = Field_ID, values_from = Fruit_Count) %>% 
+  select(-Year)
 
-## prep data
-# filter reproduction data to only 2020 (most recent mast year)
-reprod2020 <- reprodat %>% 
-  filter(Year == 2020) 
+
+cp[is.na(cp)]<-999 # for running STAN, convert NAs to 999 value
+
+# ----- estimate past size of mast trees using growth model
+
+# ** i forget, do we want to include process error (or obs error) here?
+
+for (i in 1:length(growth_ss$beta0)) {
   
+  log(Sz)
+  
+}
 
-# cp is cone production in 2020
-cp <- reprod2020 %>% 
-  pull(Fruit_Count)
 
-cp[is.na(cp)]<-999
+Sz # make this a matrix of [year,tree]
 
-# St is size in 2024 (the only year we have height masting trees)
-St <- reprod2020 %>% 
-  pull(tree_height_2024)
+Sz[is.na(St)]<-999
 
-St[is.na(St)]<-999
+# ------- FIT REPRODUCTION MODEL IN STAN -----
 
 i = length(St)
 
