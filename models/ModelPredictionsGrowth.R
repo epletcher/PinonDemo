@@ -137,18 +137,22 @@ for(k in 1:dim(Szl.filt)[1]) {
 # Exclude latent estimates and simulated data for where Observations are actually missing data
 # do this for both Szl.filt and Sz.sim, assign NAs so they match where Sz.obs has nas
 
+naspots<-which(is.na(Sz.obs)==T,arr.ind=T)
+
 Sz.sim.ppc <- Sz.sim
-Szl.filt.ppc <- Szl.filt
 
 for(k in 1:dim(Szl.filt)[1]){
   
-  Sz.iter <- Sz.sim.ppc[k,,]
-  Sz.iter[is.na(Sz.obs)] <- NA  
-  Sz.sim.ppc[k,,] <- Sz.iter
   
-  Szl.iter <- Sz.filt.ppc[k,,]
-  Szl.iter[is.na(Sz.obs)] <- NA  
-  Szl.filt.ppc[k,,] <- Szl.iter
+  Sz.sim.ppc[k,napots[1,],napots[,2]]<-NA
+  
+  # Sz.iter <- Sz.sim.ppc[k,,]
+  # Sz.iter[is.na(Sz.obs)] <- NA  
+  # Sz.sim.ppc[k,,] <- Sz.iter
+  # 
+  # Szl.iter <- Sz.filt.ppc[k,,]
+  # Szl.iter[is.na(Sz.obs)] <- NA  
+  # Szl.filt.ppc[k,,] <- Szl.iter
   
 }
 
@@ -158,11 +162,17 @@ devobs <- rep(NA,dim(Szl.filt)[3])
 for(k in 1:dim(Szl.filt)[3]) {
   
   # normal dist
-  devsim[k] <- -2*sum(dnorm(Sz.sim.ppc[k,,], exp(Szl.filt.ppc[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
-  devobs[k] <- -2*sum(dnorm(Sz.obs, exp(Szl.filt.ppc[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
+  devsim[k] <- -2*sum(dnorm(Sz.sim.ppc[k,,], exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
+  devobs[k] <- -2*sum(dnorm(Sz.obs, exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
 
 }
 
+# check na length
+# need to figure out why the length of nas are wrong
+sum(is.na(dnorm(Sz.sim.ppc[k,,], exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T))==F)
+sum(is.na(dnorm(Sz.obs, exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T)==F))
+
+# pvalue
 pval = 0
 
 for(k in 1:dim(Szl.filt)[3]) {
