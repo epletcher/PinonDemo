@@ -136,53 +136,50 @@ for(k in 1:dim(Szl.filt)[1]) {
 
 # Exclude latent estimates and simulated data for where Observations are actually missing data
 # do this for both Szl.filt and Sz.sim, assign NAs so they match where Sz.obs has nas
-
-naspots<-which(is.na(Sz.obs)==T,arr.ind=T)
+naspots<-which(is.na(Sz.obs)==T,arr.ind=T) 
 
 Sz.sim.ppc <- Sz.sim
+Szl.filt.ppc <- Szl.filt
 
-for(k in 1:dim(Szl.filt)[1]){
+for(i in 1:length(naspots[,1])){
   
-  
-  Sz.sim.ppc[k,napots[1,],napots[,2]]<-NA
-  
-  # Sz.iter <- Sz.sim.ppc[k,,]
-  # Sz.iter[is.na(Sz.obs)] <- NA  
-  # Sz.sim.ppc[k,,] <- Sz.iter
-  # 
-  # Szl.iter <- Sz.filt.ppc[k,,]
-  # Szl.iter[is.na(Sz.obs)] <- NA  
-  # Szl.filt.ppc[k,,] <- Szl.iter
-  
+  Sz.sim.ppc[,naspots[i,1],naspots[i,2]]<-NA
+  Szl.filt.ppc[,naspots[i,1],naspots[i,2]]<-NA
+
 }
 
-devsim <- rep(NA,dim(Szl.filt)[3])
-devobs <- rep(NA,dim(Szl.filt)[3])
+# make sure nas in sz.obs match too
+sum(is.na(Szl.filt.ppc[100,,])==F)
+sum(is.na(Sz.obs)==F)
+sum(is.na(Sz.sim.ppc[100,,])==F)
 
-for(k in 1:dim(Szl.filt)[3]) {
+# calculate deviance for simulated and observed data
+devsim <- rep(NA,dim(Szl.filt)[1])
+devobs <- rep(NA,dim(Szl.filt)[1])
+
+for(k in 1:dim(Szl.filt)[1]) {
   
   # normal dist
-  devsim[k] <- -2*sum(dnorm(Sz.sim.ppc[k,,], exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
-  devobs[k] <- -2*sum(dnorm(Sz.obs, exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
+  devsim[k] <- -2*sum(dnorm(Sz.sim.ppc[k,,], exp(Szl.filt.ppc[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
+  devobs[k] <- -2*sum(dnorm(Sz.obs, exp(Szl.filt.ppc[k,,]), growth.params.ss$sigo[k], log = T), na.rm = T)
 
 }
 
 # check na length
-# need to figure out why the length of nas are wrong
-sum(is.na(dnorm(Sz.sim.ppc[k,,], exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T))==F)
-sum(is.na(dnorm(Sz.obs, exp(Szl.filt[k,,]), growth.params.ss$sigo[k], log = T)==F))
+sum(is.na(dnorm(Sz.sim.ppc[2,,], exp(Szl.filt.ppc[2,,]), growth.params.ss$sigo[2], log = T))==F)
+sum(is.na(dnorm(Sz.obs, exp(Szl.filt.ppc[2,,]), growth.params.ss$sigo[2], log = T))==F)
 
 # pvalue
 pval = 0
 
-for(k in 1:dim(Szl.filt)[3]) {
+for(k in 1:dim(Szl.filt)[1]) {
   
   if(devsim[k]>devobs[k]) {pval=pval+1}
   
 }
 
-pval/dim(Szl.filt)[3]
+pval/dim(Szl.filt)[1]
 
-hist(devobs, col=rgb(0,0,1,1/4), ylim = c(0,100), xlim = c(-2200,-400), main = 'red = devsim, blue = devobs')  # blue
-hist(devsim, col=rgb(1,0,0,1/4), ylim = c(0,100), xlim = c(-2200,-400), add=T)  # red
+hist(devobs, col=rgb(0,0,1,1/4), ylim = c(0,1200), xlim = c(-2200,-400), main = 'red = devsim, blue = devobs')  # blue
+hist(devsim, col=rgb(1,0,0,1/4), ylim = c(0,1200), xlim = c(-2200,-400), add=T)  # red
 

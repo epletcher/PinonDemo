@@ -19,10 +19,10 @@ gp <- as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.
 reprodat <- read.csv("cleaned_cone_prod_data.csv") 
 
 # cp is cone production across trees and years [year,tree]
-cp.obs<-cp <- reprodat %>% select(c(Fruit_Count,Year,Field_ID)) %>% 
-  pivot_wider(names_from = Field_ID, values_from = Fruit_Count) %>% 
-  add_row(Year = 2024) %>% 
-  select(-Year)
+cp.obs<-cp <- reprodat %>% 
+  select(c(Fruit_Count,Year,Field_ID)) %>% 
+  filter(Year > 1999) %>% # remove 1997 and 1998, no cones produced by focal trees
+  pivot_wider(names_from = Field_ID, values_from = Fruit_Count)
 
 
 cp[is.na(cp)]<-999 # for running STAN, convert NAs to 999 value
@@ -33,18 +33,17 @@ cp[is.na(cp)]<-999 # for running STAN, convert NAs to 999 value
 # make this a matrix of [year,tree]
 Sz.obs <- reprodat %>% 
   rename(height = tree_height_2024) %>% 
+  mutate(height = case_when(Year<2024 ~ NA, .default = height)) %>%
   select(c(Field_ID,height,Year)) %>%
-  pivot_wider(names_from = Field_ID, values_from = height) %>%
-  add_row(Year = 2024)
+  pivot_wider(names_from = Field_ID, values_from = height)
 
-# ** editing here **
-# ** i forget, do we want to include process error (or obs error) here?
+# Notes: some trees do not have height for 2024, so they will remain as NAs for heights back in time
 
 for (i in 1:length(gp$beta0)) {
   
   for(t in 1:length(Sz.obs[1]))
   
-  log(Sz)-gp$beta0)/gp$beta1 
+  log(Sz)-gp$beta0)/gp$beta1 # not including any error
   
 }
 
