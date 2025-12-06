@@ -22,7 +22,8 @@ reprodat <- read.csv("cleaned_cone_prod_data.csv")
 cp.obs<-cp <- reprodat %>% 
   select(c(Fruit_Count,Year,Field_ID)) %>% 
   filter(Year > 1999) %>% # remove 1997 and 1998, no cones produced by focal trees
-  pivot_wider(names_from = Field_ID, values_from = Fruit_Count)
+  pivot_wider(names_from = Field_ID, values_from = Fruit_Count) %>%
+  as.matrix()
 
 
 cp[is.na(cp)]<-999 # for running STAN, convert NAs to 999 value
@@ -33,25 +34,41 @@ cp[is.na(cp)]<-999 # for running STAN, convert NAs to 999 value
 # make this a matrix of [year,tree]
 Sz.obs <- reprodat %>% 
   rename(height = tree_height_2024) %>% 
-  mutate(height = case_when(Year<2024 ~ NA, .default = height)) %>%
+  mutate(height = case_when(Year<2024 ~ NA, .default = height)) %>% # add NAs for previous that we need model/estimate height for
   select(c(Field_ID,height,Year)) %>%
-  pivot_wider(names_from = Field_ID, values_from = height)
+  filter(Year > 1999) %>% # remove 1997 and 1998, no cones produced by focal trees
+  pivot_wider(names_from = Field_ID, values_from = height) %>%
+  select(-Year) %>%
+  as.matrix()
 
 # Notes: some trees do not have height for 2024, so they will remain as NAs for heights back in time
 
-for (i in 1:length(gp$beta0)) {
+# empty array to fill
+Sz.obs.p <- replicate(length(gp$beta0), Sz.obs)
+
+for (i in 1:length(gp$beta0)) { 
   
-  for(t in 1:length(Sz.obs[1]))
-  
-  log(Sz)-gp$beta0)/gp$beta1 # not including any error
+  for(t in dim(Sz.obs)[1]:2) { # back casting here, so descending order
+    
+    # trees are slowly shrinking?? check this equation
+    Sz.obs.p[t-1,,i] <- exp((log(Sz.obs.p[t,,i])-gp$beta0[i])/gp$beta1[i]) # not including any error
+    
+  }
   
 }
 
-Sz<-Sz.obs
+
+# ------ Visual check of back casted tree heights ---------
+matplot(Sz.obs.p[,10,], type = "l") # plot for a particular tree
+
+# ------- FIT REPRODUCTION MODEL IN STAN -----
+## prep size data for STAN
+
+# **** editing here ***
+Sz<-Sz.obs.p
 
 Sz[is.na(St)]<-999
 
-# ------- FIT REPRODUCTION MODEL IN STAN -----
 
 i = length(St)
 
