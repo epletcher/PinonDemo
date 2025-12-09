@@ -70,10 +70,13 @@ Sz<-Sz.obs.p
 Sz[is.na(St)]<-999
 
 
-i = length(St)
+# dimensions
+i = # individual
+t = # year
+j = # iterations
 
 # specify model data
-reprodata <- list(i=i,St=St,cp=cp)
+reprodata <- list(i=i,j=j,t=t,Sz=Sz,cp=cp)
 
 #start <- list() # specify starting values, if needed
 
@@ -94,14 +97,14 @@ repro.params <-
 
 # ------ generate preds -------
 # vector of Size_tmins for generating preds
-St.range <- seq(1,6,0.05)
+Sz.range <- seq(1,6,0.05)
 
 # preds
-cone.mean.pred.range <- matrix(NA,length(St.range),length(repro.params$beta0))
+cone.mean.pred.range <- matrix(NA,length(Sz.range),length(repro.params$beta0))
 
 for (k in 1:length(repro.params$beta0)) {
   
-  cone.mean.pred.range[,k] <- exp(repro.params$beta0[k] + repro.params$beta1[k]*St.range)
+  cone.mean.pred.range[,k] <- exp(repro.params$beta0[k] + repro.params$beta1[k]*Sz.range)
   
 }
 
