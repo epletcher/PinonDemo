@@ -69,8 +69,8 @@ Sz <- Sz.obs <- treeyears %>%
 # remove trees that have no size measurements for the entire time period OR only 1 size measurement
 Sz <- Szl.init <- Sz.obs <- Sz[,colSums(is.na(Sz))<(nrow(Sz)-1)]
 
-# reassign NAs as -99 for versions of data that will go into the stan model (Stand doesn't accept NA's)
-Sz[is.na(Sz)]<- -99
+# reassign NAs as 999 for versions of data that will go into the stan model (Stan doesn't accept NA's)
+Sz[is.na(Sz)]<- 999
 Szl.init[is.na(Szl.init)] <- mean(Sz.obs, na.rm = T)
 # ------ Prep census endpoints data frame --------
 
