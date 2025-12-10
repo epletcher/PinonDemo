@@ -132,9 +132,7 @@ for(k in 1:dim(Szl.filt)[1]) {
     
 }
 
-## Calculate bayesian p value using deviance
-
-# Exclude latent estimates and simulated data for where Observations are actually missing data
+## Exclude latent estimates and simulated data for where Observations are actually missing data
 # do this for both Szl.filt and Sz.sim, assign NAs so they match where Sz.obs has nas
 naspots<-which(is.na(Sz.obs)==T,arr.ind=T) 
 
@@ -152,6 +150,8 @@ for(i in 1:length(naspots[,1])){
 sum(is.na(Szl.filt.ppc[100,,])==F)
 sum(is.na(Sz.obs)==F)
 sum(is.na(Sz.sim.ppc[100,,])==F)
+
+## DEVIANCE
 
 # calculate deviance for simulated and observed data
 devsim <- rep(NA,dim(Szl.filt)[1])
@@ -182,4 +182,46 @@ pval/dim(Szl.filt)[1]
 
 hist(devobs, col=rgb(0,0,1,1/4), ylim = c(0,1200), xlim = c(-2200,-400), main = 'red = devsim, blue = devobs')  # blue
 hist(devsim, col=rgb(1,0,0,1/4), ylim = c(0,1200), xlim = c(-2200,-400), add=T)  # red
+ 
+## MEAN
+
+# mean of the simulated data across all parameter iterations
+meansim <- apply(Sz.sim.ppc, MARGIN = 1, FUN = mean, na.rm = T)
+meanobs <- mean(Sz.obs, na.rm = T)
+# pvalue
+pval = 0
+
+for(k in 1:dim(Szl.filt)[1]) {
+  
+  if(meansim[k]>meanobs) {pval=pval+1}
+  
+}
+
+pval/dim(Szl.filt)[1]
+
+hist(meansim, col=rgb(1,0,0,1/4), main = 'red = sim mean, blue = obs mean')  # red
+abline(v = quantile(meansim, probs = c(0.05, 0.95)),
+       col = "red", lwd = 2)
+abline(v = meanobs, col='blue', lwd = 2)  # blue
+
+## STANDARD DEV
+
+# standard dev of the simulated data across all parameter iterations
+sdsim <- apply(Sz.sim.ppc, MARGIN = 1, FUN = sd, na.rm = T)
+sdobs <- sd(Sz.obs, na.rm = T)
+# pvalue
+pval = 0
+
+for(k in 1:dim(Szl.filt)[1]) {
+  
+  if(sdsim[k]>sdobs) {pval=pval+1}
+  
+}
+
+pval/dim(Szl.filt)[1]
+
+hist(sdsim, col=rgb(1,0,0,1/4), main = 'red = sim. sd, blue = obs sd')  # red
+abline(v = quantile(sdsim, probs = c(0.05, 0.95)),
+       col = "red", lwd = 2)
+abline(v = sdobs, col='blue', lwd = 2)  # blue
 
