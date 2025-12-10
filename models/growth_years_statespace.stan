@@ -9,10 +9,10 @@ data {
 
 // The parameters accepted by the model. Our model
 parameters {
-  // real beta0[y]; // year effect
-  // real beta1[y]; // year effect
-  real beta0; // w/o year effect
-  real beta1; // w/o year effect
+  real beta0[y]; // year effect
+  real beta1[y]; // year effect
+  //real beta0; // w/o year effect
+  //real beta1; // w/o year effect
   real<lower = 0> sigp;
   real<lower = 0> sigo;
   // real beta0mu;
@@ -32,11 +32,11 @@ for(j in 1:i) {
 //start year that the tree first shows up (enters the census), end the year the tree dies (leaves the census for good), fill blank matrix for first year's value
     for(t in (tcy[j,1]+1):tcy[j,2]) { 
 
-        Szl[t,j] ~ normal(beta0 + beta1*Szl[t-1,j], sigp); // w/o year effect, NA/-99 values will be kind of crazy b/c we arent removing them here //remove log here
+        //Szl[t,j] ~ normal(beta0 + beta1*Szl[t-1,j], sigp); // w/o year effect, NA/999 values will be kind of crazy b/c we arent removing them here //remove log here
         
-        // Szl[t,j] ~ normal(beta0[t] + beta1[t]*Szl[t-1,j], sigp); // w/ year effect
+        Szl[t,j] ~ normal(beta0[t] + beta1[t]*Szl[t-1,j], sigp); // w/ year effect
         
-        if(Sz[t,j]!=-99) { // in order to skip over NA's, only need to do this for the data model
+        if(Sz[t,j]!=999) { // in order to skip over NA's, only need to do this for the data model
         
         Sz[t,j] ~ normal(exp(Szl[t,j]), sigo); //exponentiate here
 
