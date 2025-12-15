@@ -51,7 +51,7 @@ for (i in 1:length(gp$beta0)) {
   for(t in dim(Sz.obs)[1]:2) { # back casting here, so descending order
     
     # trees are slowly shrinking?? check this equation
-    Sz.obs.p[t-1,,i] <- exp((log(Sz.obs.p[t,,i])-gp$beta0[i])/gp$beta1[i]) # not including any error
+    Sz.obs.p[t-1,,i] <- exp((log(Sz.obs.p[t,,i])-gp$beta0[i])/gp$beta1[i]) # ** put process error back in
     
   }
   

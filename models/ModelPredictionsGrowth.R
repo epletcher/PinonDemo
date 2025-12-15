@@ -65,51 +65,51 @@ lines(exp(hi.Szl[,3]), lty = 2, col = 'purple')
 
 #
 # ------- GENERATE PREDICITONS ---------
-
-# Use latent states from fit model as size at t-1
-# Generate predictions for year effect growth model
-# (no year effect)
-
-# empty array for predictions
-Sz.pred <- array(NA,c(dim(Szl.filt)[1],dim(Szl.filt)[2],dim(Szl.filt)[3]))
-
-# loop over iterations, and through years
-# ** process error is not propagaed in this current form, latent size at t-1 is used each year to predict size the next year, not the new predictions
-for(k in 1:dim(Szl.filt)[1]) {
-  
-  for(t in 2:dim(Szl.filt)[2]) { 
-    
-    # using latent size at t-1, and sigp to generate predictions here
-    Sz.pred[k,t,] <- rnorm(dim(Szl.filt)[3], exp(growth.params.ss$beta0[k] + growth.params.ss$beta1[k]*Szl.filt[k,t-1,]), growth.params.ss$sigp[k]) # eponentiate
-    
-  }
-  
-}
-
-# credible intervals and median predictions for plottting
-med.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = median)
-lo.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.05, na.rm = T)
-hi.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.95, na.rm = T)
- 
+# 
+# # Use latent states from fit model as size at t-1
+# # Generate predictions for year effect growth model
+# # (no year effect)
+# 
+# # empty array for predictions
+# Sz.pred <- array(NA,c(dim(Szl.filt)[1],dim(Szl.filt)[2],dim(Szl.filt)[3]))
+# 
+# # loop over iterations, and through years
+# # ** process error is not propagaed in this current form, latent size at t-1 is used each year to predict size the next year, not the new predictions
+# for(k in 1:dim(Szl.filt)[1]) {
+#   
+#   for(t in 2:dim(Szl.filt)[2]) { 
+#     
+#     # using latent size at t-1, and sigp to generate predictions here
+#     Sz.pred[k,t,] <- rnorm(dim(Szl.filt)[3], exp(growth.params.ss$beta0[k] + growth.params.ss$beta1[k]*Szl.filt[k,t-1,]), growth.params.ss$sigp[k]) # eponentiate
+#     
+#   }
+#   
+# }
+# 
+# # credible intervals and median predictions for plottting
+# med.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = median)
+# lo.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.05, na.rm = T)
+# hi.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.95, na.rm = T)
+#  
 #
 # ----------- PLOT PREDICTIONS -----------
-
-# plot predictions against latent states
-plot(Sz.pred[50,,],exp(Szl.filt[50,,])) # picking a random iteration
-
-# plot predictions on top of observed sizes for a handful of trees
-plot(Sz.obs[,1], ylim = c(0,7), pch = 16)
-lines(med.Sz[,1])
-lines(lo.Sz[,1], lty = 2)
-lines(hi.Sz[,1], lty = 2)
-points(Sz.obs[,26], col = 'coral', pch = 16)
-lines(med.Sz[,26], col = 'coral')
-lines(lo.Sz[,26], lty = 2, col = 'coral')
-lines(hi.Sz[,26], lty = 2, col = 'coral')
-points(Sz.obs[,3], col = 'purple', pch = 16)
-lines(med.Sz[,3], col = 'purple')
-lines(lo.Sz[,3], lty = 2, col = 'purple')
-lines(hi.Sz[,3], lty = 2, col = 'purple')
+# 
+# # plot predictions against latent states
+# plot(Sz.pred[50,,],exp(Szl.filt[50,,])) # picking a random iteration
+# 
+# # plot predictions on top of observed sizes for a handful of trees
+# plot(Sz.obs[,1], ylim = c(0,7), pch = 16)
+# lines(med.Sz[,1])
+# lines(lo.Sz[,1], lty = 2)
+# lines(hi.Sz[,1], lty = 2)
+# points(Sz.obs[,26], col = 'coral', pch = 16)
+# lines(med.Sz[,26], col = 'coral')
+# lines(lo.Sz[,26], lty = 2, col = 'coral')
+# lines(hi.Sz[,26], lty = 2, col = 'coral')
+# points(Sz.obs[,3], col = 'purple', pch = 16)
+# lines(med.Sz[,3], col = 'purple')
+# lines(lo.Sz[,3], lty = 2, col = 'purple')
+# lines(hi.Sz[,3], lty = 2, col = 'purple')
 
 #
 # --------- POSTERIOR PREDICTIVE CHECK -------------
@@ -126,7 +126,7 @@ for(k in 1:dim(Szl.filt)[1]) {
   
   for(t in 1:dim(Szl.filt)[2]) {
     
-    Sz.sim[k,t,] <- rnorm(dim(Sz.sim)[3],exp(Szl.filt[k,t,]),growth.params.ss$sigo[k]) # eponentiate
+    Sz.sim[k,t,] <- rnorm(dim(Sz.sim)[3],exp(Szl.filt[k,t,]),growth.params.ss$sigo[k]) # exponentiate
     
   }
     
