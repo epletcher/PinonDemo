@@ -1,33 +1,45 @@
-// ** note this is model is not set up to be run yet **
 
 // The input data
 data {
   int<lower=0> i; // individual
-  int cp[i]; //Response; cone production 
-  vector[i] Sz; // height 2024
+  int<lower=0> y; // time / year
+  int<lower=0> k; // growth state space model iteration
+  int cp[y,i]; //Response; cone production 
+  matrix[i,k] Sz[y]; //array of heights across years (y) by individual (i) and process/param uncertainty carried over from growth model (k)
+  
 }
 
 // The parameters accepted by the model. Our model
 parameters {
-  real beta0;
-  real beta1;
+  real beta0[y];
+  real beta1[y];
+  
+  real<lower = 0> sigs[y];
+  
+  matrix[y,i] tsz; //latent true size at t for individual i
   
 }
 
 model {
-      // ** need add iteration across years too **
-        for(j in 1:i){
+      
+        for(j in 1:i){ // individuals
           
-          if(Sz[j]!=999 && cp[j]!=999) { // in order to skip over NA's
+          for(t in 1:y) { // years
+            
+            if(cp[t,j]!=999) { // in order to skip over NA's
           
-    cp[j] ~ poisson(exp(beta0 + beta1*Sz[j])); 
+    Sz[t,j,] ~ normal(tsz[t,j], sigs[t])T[0,];    
+    
+    cp[t,j] ~ poisson(exp(beta0[t] + beta1[t]*tsz[t,j])); 
     
           }
+            
+       }
     
     }
   
   //priors
   beta0 ~ normal(0,1); 
   beta1 ~ normal(0,1);
-  
+  sigs ~ normal(0,10)T[0,]; // by year, because variances it grows back in time
   }

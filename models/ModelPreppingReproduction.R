@@ -16,15 +16,16 @@ gp <- as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.
 
 # ------- Load cone production and height of masting trees ---------
 
-reprodat <- read.csv("cleaned_cone_prod_data.csv") 
+reprodat <- read.csv("cleaned_cone_prod_data.csv") %>% filter(!is.na(tree_height_2024))
+  # remove trees that don't have height in 2024
 
 # cp is cone production across trees and years [year,tree]
 cp.obs<-cp <- reprodat %>% 
   select(c(Fruit_Count,Year,Field_ID)) %>% 
   filter(Year > 1999) %>% # remove 1997 and 1998, no cones produced by focal trees
   pivot_wider(names_from = Field_ID, values_from = Fruit_Count) %>%
+  select(-Year) %>%
   as.matrix()
-
 
 cp[is.na(cp)]<-999 # for running STAN, convert NAs to 999 value
 
@@ -51,37 +52,42 @@ for (i in 1:length(gp$beta0)) {
   for(t in dim(Sz.obs)[1]:2) { # back casting here, so descending order
     
     # trees are slowly shrinking?? check this equation
-    Sz.obs.p[t-1,,i] <- exp((log(Sz.obs.p[t,,i])-gp$beta0[i])/gp$beta1[i]) # ** put process error back in
+    Sz.obs.p[t-1,,i] <- exp(rnorm(dim(Sz.obs.p)[2], (log(Sz.obs.p[t,,i])-gp$beta0[i])/gp$beta1[i], gp$sigp[i])) # inlcude process error because we become less certain of tree size further into the past
     
   }
   
 }
 
+# Visual check of back casted tree heights 
+matplot(Sz.obs.p[,35,], type = "l") # plot for a particular tree
 
-# ------ Visual check of back casted tree heights ---------
-matplot(Sz.obs.p[,10,], type = "l") # plot for a particular tree
+# thin Sz.obs.p to 500 iterations
+thin.iter <- seq(9,dim(Sz.obs.p)[3], by = 9) # vector of every 10th iteration
+
+Sz <- Sz.obs.p[,,thin.iter]
+
+# Visual check of *thinned* back casted tree heights 
+matplot(Sz[,35,], type = "l") # plot for a particular tree
 
 # ------- FIT REPRODUCTION MODEL IN STAN -----
 ## prep size data for STAN
 
-# **** editing here ***
-Sz<-Sz.obs.p
-
-Sz[is.na(St)]<-999
-
-
 # dimensions
-i = # individual
-t = # year
-j = # iterations
+i = dim(Sz)[2] # individual
+y = dim(Sz)[1] # year
+k = dim(Sz)[3] # growth model iterations
 
 # specify model data
-reprodata <- list(i=i,j=j,t=t,Sz=Sz,cp=cp)
+reprodata <- list(i=i,k=k,y=y,Sz=Sz,cp=cp)
 
-#start <- list() # specify starting values, if needed
+# set initial true size as the mean across param/process uncertainty values
+start <- list(list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
+              list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
+              list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)))
 
 # fit reproduction model
-reprofit1 <- stan(file='models/reproduction.stan', data=reprodata, chains=3, iter=3000, warmup=1500)
+options(mc.cores = parallel::detectCores())
+reprofit1 <- stan(file='models/reproduction.stan', data=reprodata, init = start, chains=3, iter=3000, warmup=1500)
 
 reprofit1 
 
