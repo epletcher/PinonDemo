@@ -13,13 +13,14 @@ data {
 parameters {
   real beta0[y];
   real beta1[y];
-  
-  // real beta0mu;
-  // real beta1mu;
-  // real<lower = 0> tausq0;
-  // real<lower = 0> tausq1;
-  
   real<lower = 0> sigs[y]; // by year, because variances it grows back in time
+  
+  real beta0mu;
+  real beta1mu;
+  real sigmu;
+  real<lower = 0> tausq0;
+  real<lower = 0> tausq1;
+  real<lower = 0> tausqs;
   
   matrix[y,i] tsz; //latent true size at t for individual i
   
@@ -46,12 +47,14 @@ model {
   //priors
   beta0 ~ normal(beta0mu,tausq0); 
   beta1 ~ normal(beta1mu,tausq1);
-  sigs ~ normal(0,10)T[0,]; 
+  sigs ~ normal(sigmu,tausqs)T[0,]; 
   
   // hyper priors
   beta0mu ~ normal(0,10);
   beta1mu ~ normal(1,10);
+  sigmu ~ normal(1,10);
   tausq0 ~ inv_gamma(1,1);
   tausq1 ~ inv_gamma(1,1);
+  tausqs ~ inv_gamma(1,1);
   
   }
