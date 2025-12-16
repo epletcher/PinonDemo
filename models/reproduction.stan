@@ -14,7 +14,7 @@ parameters {
   real beta0[y];
   real beta1[y];
   
-  real<lower = 0> sigs[y];
+  real<lower = 0> sigs[y]; // by year, because variances it grows back in time
   
   matrix[y,i] tsz; //latent true size at t for individual i
   
@@ -39,7 +39,7 @@ model {
     }
   
   //priors
-  beta0 ~ normal(0,1); 
-  beta1 ~ normal(0,1);
-  sigs ~ normal(0,10)T[0,]; // by year, because variances it grows back in time
+  beta0 ~ normal(0,10); 
+  beta1 ~ normal(0,10);
+  sigs ~ normal(0,10)T[0,]; 
   }
