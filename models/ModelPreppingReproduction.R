@@ -87,7 +87,7 @@ start <- list(list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
 
 # fit reproduction model
 options(mc.cores = parallel::detectCores())
-reprofit1 <- stan(file='models/reproduction.stan', data=reprodata, init = start, chains=3, iter=1000, warmup=500)
+reprofit1 <- stan(file='models/reproduction.stan', data=reprodata, init = start, chains=3, iter=1000, warmup=500) # increase iterations later but need to debug
 
 reprofit1 
 
