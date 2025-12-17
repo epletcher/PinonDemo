@@ -81,9 +81,13 @@ k = dim(Sz)[3] # growth model iterations
 reprodata <- list(i=i,k=k,y=y,Sz=Sz,cp=cp)
 
 # set initial true size as the mean across param/process uncertainty values
-start <- list(list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
+start <- list(list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)), # maybe the mean is "too good of a starting val"
               list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
               list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)))
+
+# start <- list(list("tsz"=matrix(1,dim(Sz)[1],dim(Sz)[2])),
+#                             list("tsz"=matrix(1,dim(Sz)[1],dim(Sz)[2])),
+#                             list("tsz"=matrix(1,dim(Sz)[1],dim(Sz)[2])))
 
 # fit reproduction model
 options(mc.cores = parallel::detectCores())
@@ -92,6 +96,8 @@ reprofit1 <- stan(file='models/reproduction.stan', data=reprodata, init = start,
 reprofit1 
 
 launch_shinystan(reprofit1)
+
+# ** issues, fitting latent 25 okay, but then bad for all other years, sigs trails off
 
 # -------- Extract posterior estimates ------
 # put parameter estimates in a dataframe
