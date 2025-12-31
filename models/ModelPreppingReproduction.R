@@ -3,7 +3,7 @@ library(rstan)
 library(shinystan)
 library(cowplot)
 
-## set workspace to 'PinonDemo' folder/repository
+## set working directory to 'PinonDemo' folder/repository
 
 ## load model fitting workspace generated from 'ModelPreppingGrowth'
 # contains the fit ss growth model 'PinonDemo/models/growth_years_statespace.stan'
@@ -45,6 +45,7 @@ Sz.obs <- reprodat %>%
 # Notes: some trees do not have height for 2024, so they will remain as NAs for heights back in time
 
 # empty array to fill
+colnames(Sz.obs) <- NULL
 Sz.obs.p <- replicate(length(gp$beta0), Sz.obs)
 
 for (i in 1:length(gp$beta0)) { 
@@ -64,7 +65,8 @@ matplot(Sz.obs.p[,35,], type = "l") # plot for a particular tree
 # thin Sz.obs.p to 500 iterations
 thin.iter <- seq(9,dim(Sz.obs.p)[3], by = 9) # vector of every 10th iteration
 
-Sz <- Sz.obs.p[,,thin.iter]
+# Sz <- log(Sz.obs.p[,,thin.iter]) # model SZ on the log scale
+Sz <- Sz.obs.p[,,thin.iter] # model SZ w/o log scale
 
 # Visual check of *thinned* back casted tree heights 
 matplot(Sz[,35,], type = "l") # plot for a particular tree
@@ -77,17 +79,19 @@ i = dim(Sz)[2] # individual
 y = dim(Sz)[1] # year
 k = dim(Sz)[3] # growth model iterations
 
+# id for year effect
+yr <- unique(reprodat$Year)[3:27]
+
 # specify model data
-reprodata <- list(i=i,k=k,y=y,Sz=Sz,cp=cp)
+# reprodata <- list(i=i,k=k,y=y,yr=yr,Sz=Sz,cp=cp) # year fixed effect
+
+reprodata <- list(i=i,k=k,y=y,Sz=Sz,cp=cp) # year random effect
 
 # set initial true size as the mean across param/process uncertainty values
-start <- list(list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)), # maybe the mean is "too good of a starting val"
+start <- list(list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
               list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
               list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)))
 
-# start <- list(list("tsz"=matrix(1,dim(Sz)[1],dim(Sz)[2])),
-#                             list("tsz"=matrix(1,dim(Sz)[1],dim(Sz)[2])),
-#                             list("tsz"=matrix(1,dim(Sz)[1],dim(Sz)[2])))
 
 # fit reproduction model
 options(mc.cores = parallel::detectCores())
