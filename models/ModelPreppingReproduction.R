@@ -149,44 +149,10 @@ start <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y
               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y)))
 
 options(mc.cores = parallel::detectCores())
-reprofit2 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start, iter=1000, warmup=500) # increase iterations later but need to debug
-
+reprofit2 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start, iter=3000, warmup=1500) 
 reprofit2
 
 launch_shinystan(reprofit2)
 
-# -------- Extract posterior estimates ------
-# put parameter estimates in a dataframe
-
-## repro params
-repro.params <- 
-  as.matrix(reprofit1, pars = c("beta0","beta1")) %>% 
-  as.data.frame()
-
-# ------ generate preds -------
-# vector of Size_tmins for generating preds
-Sz.range <- seq(1,6,0.05)
-
-# preds
-cone.mean.pred.range <- matrix(NA,length(Sz.range),length(repro.params$beta0))
-
-for (k in 1:length(repro.params$beta0)) {
-  
-  cone.mean.pred.range[,k] <- exp(repro.params$beta0[k] + repro.params$beta1[k]*Sz.range)
-  
-}
-
-# median & CI's
-# extract median and 90% credible intervals of MEAN PREDICTED SIZE
-med.cone <- apply(cone.mean.pred.range, MARGIN = c(1), FUN = median)
-low.cone <- apply(cone.mean.pred.range, MARGIN = c(1), FUN = quantile, 0.05) # low
-up.cone <- apply(cone.mean.pred.range, MARGIN = c(1), FUN = quantile, 0.95) # up
-
-
-# plot
-plot(x = St.range, y = med.cone, type = "l", lwd = 2, lty = 1, col = "aquamarine3")
-lines(x = St.range, y = low.cone, lty = 2, col = "aquamarine3")
-lines(x = St.range, y = up.cone, lty = 2, col = "aquamarine3")
-
-# ------ ggplot ---------
-  
+# -------- save workspace -------
+save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction.RData")
