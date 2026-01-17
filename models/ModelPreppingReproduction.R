@@ -144,12 +144,12 @@ reprodata <- list(i=i,k=k,y=y,Sz=Sz,cp=cp) # year random effect
 
 ## scenario based model fitting
 # set initial true size as the mean across param/process uncertainty values
-start <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y)),
-              list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y)),
-              list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y)))
+start <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y)),
+              list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y)),
+              list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y)))
 
 options(mc.cores = parallel::detectCores())
-reprofit2 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start, iter=3000, warmup=1500) 
+reprofit2 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start, iter=3000, warmup=1500) # run for longer after i 
 reprofit2
 
 launch_shinystan(reprofit2)
