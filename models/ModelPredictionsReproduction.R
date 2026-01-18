@@ -92,21 +92,17 @@ devobs.repro.hg <- rep(NA,length(alpha1[,1]))
 
 for(k in 1:length(alpha1[,1])) {
   
-  for(t in 1:y) {
-  
   # low growth
-  devsim.repro.lg[k] <- -2*sum(dpois(cp.yhat.lg[,t,k], cp.lambda.lg, log = T), na.rm = T)
-  devobs.repro.lg[k] <- -2*sum(dpois(cp.obs, cp.lambda.lg, log = T), na.rm = T) 
+  devsim.repro.lg[k] <- -2*sum(dpois(cp.yhat.lg[,,k], cp.lambda.lg[,,k], log = T), na.rm = T)
+  devobs.repro.lg[k] <- -2*sum(dpois(cp.obs, cp.lambda.lg[,,k], log = T), na.rm = T) 
   
   # avg growth
-  devsim.repro.mg[k] <- -2*sum(dpois(cp.yhat.lg[,t,k], cp.lambda.mg, log = T), na.rm = T)
-  devobs.repro.mg[k] <- -2*sum(dpois(cp.obs, cp.lambda.mg, log = T), na.rm = T) 
+  devsim.repro.mg[k] <- -2*sum(dpois(cp.yhat.lg[,,k], cp.lambda.mg[,,k], log = T), na.rm = T)
+  devobs.repro.mg[k] <- -2*sum(dpois(cp.obs, cp.lambda.mg[,,k], log = T), na.rm = T) 
   
   # high growth
-  devsim.repro.hg[k] <- -2*sum(dpois(cp.yhat.lg[,t,k], cp.lambda.hg, log = T), na.rm = T)
-  devobs.repro.hg[k] <- -2*sum(dpois(cp.obs, cp.lambda.hg, log = T), na.rm = T) 
-  
-  }
+  devsim.repro.hg[k] <- -2*sum(dpois(cp.yhat.lg[,,k], cp.lambda.hg[,,k], log = T), na.rm = T)
+  devobs.repro.hg[k] <- -2*sum(dpois(cp.obs, cp.lambda.hg[,,k], log = T), na.rm = T) 
   
 }
 
@@ -127,79 +123,11 @@ pval.mg/length(alpha1[,1])
 pval.hg/length(alpha1[,1])
 
 hist(devobs.repro.lg, col=rgb(0,0,1,1/4))  
-hist(devsim.repro.lg, col=rgb(1,0,0,1/4), add = T)  
+hist(devsim.repro.lg, col=rgb(1,0,0,1/4))  
 
 hist(devobs.repro.mg, col=rgb(0,0,1,1/4))
-hist(devsim.repro.lg, col=rgb(1,0,0,1/4), add = T)
+hist(devsim.repro.lg, col=rgb(1,0,0,1/4))
 
 hist(devobs.repro.hg, col=rgb(0,0,1,1/4))
-hist(devsim.repro.lg, col=rgb(1,0,0,1/4), add = T)
-
-####### ppc code from martin:
-
-# Function to run PPC of the Deviance for the Poisson regression model
-PPC_deviance_poisson_model <- function(n_obs, param_chains,
-                                       predictor_matrix,
-                                       pred_array, obs_data) {
-  
-  n_iter = nrow(param_chains)
-  
-  # Step 1: Create empty vectors to hold data
-  
-  # Deviance of the predicted data for each parameter iteration
-  deviance_output_pred_data <- rep(NA, n_iter)
-  
-  # Deviance of the observed data for each parameter iteration
-  deviance_output_obs_data <- rep(NA, n_iter)
-  
-  # Mean predicted mean of each observation
-  mu = numeric(n_obs)
-  
-  # Log likelihood of the predicted data for each parameter iteration
-  log_like_pred_data <- rep(NA, n_iter)
-  
-  # Log likelihood of the observed data for each parameter iteration
-  log_like_obs_data <- rep(NA, n_iter)
-  
-  # Counts of how many times the deviance of the observed data is lower than the
-  # deviance of the predicted data.
-  p_value <- 0
-  
-  # Step 2: Calculate Deviance for the predicted and observed data for each
-  # parameter iteration. Then count how many times the deviance of the observed
-  # data is lower than the predicted data.
-  for (i in 1:n_iter) {
-    # Calculate predictive values from each parameter chain iteration
-    for (j in 1:n_obs) {
-      mu[j] <- exp(sum(predictor_matrix[j,] * param_chains[i,])) 
-    }
-    log_like_pred_data[i] <- sum(dpois(pred_array[,,i], lambda = mu, log = T))
-    deviance_output_pred_data[i] <- (-2 * log_like_pred_data[i])
-    
-    
-    log_like_obs_data[i] <- sum(dpois(obs_data, lambda = mu, log = T))
-    deviance_output_obs_data[i] <- (-2 * log_like_obs_data[i])
-    
-    if(deviance_output_obs_data[i] < deviance_output_pred_data[i]) {
-      p_value <- p_value + 1
-    }
-  }
-  
-  # Step 3: Prep data for output
-  
-  # Deviance and log likelihood values for each parameter iteration
-  deviance_df <- data.frame(log_like_pred_data, deviance_output_pred_data,
-                            log_like_obs_data, deviance_output_obs_data)
-  
-  # Total number of times observed deviance is lower than the predicted deviance
-  # divided by the total iterations
-  p_value = p_value/n_iter
-  
-  # Save data as a list
-  output_list <- list(deviance_df = deviance_df,
-                      p_value = p_value)
-  
-  return(output_list)
-}
-
+hist(devsim.repro.lg, col=rgb(1,0,0,1/4))
 
