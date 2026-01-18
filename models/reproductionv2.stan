@@ -55,9 +55,9 @@ model {
     // with out quad
     cp[t,j] ~ poisson(exp(alpha1[t] + beta1[t]*Sz[t,j,1])); // unlogged size, under low growth conditions
     
-    cp[t,j] ~ poisson(exp(alpha2[t] + beta2[t]*Sz[t,j,2]); // unlogged size, under avg growth conditions
+    cp[t,j] ~ poisson(exp(alpha2[t] + beta2[t]*Sz[t,j,2])); // unlogged size, under avg growth conditions
   
-    cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3]); // ungged size, under high growth conditions
+    cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3])); // ungged size, under high growth conditions
     
           }
             
@@ -86,5 +86,5 @@ model {
   // 
   // beta2mu ~ normal(1,10);
   // tausq2 ~ normal(0,10)T[0,];
-  
+  // 
   }
