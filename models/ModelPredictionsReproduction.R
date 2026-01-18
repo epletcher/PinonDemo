@@ -97,11 +97,11 @@ for(k in 1:length(alpha1[,1])) {
   devobs.repro.lg[k] <- -2*sum(dpois(cp.obs, cp.lambda.lg[,,k], log = T), na.rm = T) 
   
   # avg growth
-  devsim.repro.mg[k] <- -2*sum(dpois(cp.yhat.lg[,,k], cp.lambda.mg[,,k], log = T), na.rm = T)
+  devsim.repro.mg[k] <- -2*sum(dpois(cp.yhat.mg[,,k], cp.lambda.mg[,,k], log = T), na.rm = T)
   devobs.repro.mg[k] <- -2*sum(dpois(cp.obs, cp.lambda.mg[,,k], log = T), na.rm = T) 
   
   # high growth
-  devsim.repro.hg[k] <- -2*sum(dpois(cp.yhat.lg[,,k], cp.lambda.hg[,,k], log = T), na.rm = T)
+  devsim.repro.hg[k] <- -2*sum(dpois(cp.yhat.hg[,,k], cp.lambda.hg[,,k], log = T), na.rm = T)
   devobs.repro.hg[k] <- -2*sum(dpois(cp.obs, cp.lambda.hg[,,k], log = T), na.rm = T) 
   
 }
