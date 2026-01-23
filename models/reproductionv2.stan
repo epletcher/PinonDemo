@@ -24,18 +24,21 @@ parameters {
   real beta2[y];
   real beta3[y];
   
-  //real beta1_2[y];
-  //real beta2_2[y];
-  //real beta3_2[y];
+  real beta1_2[y];
+  real beta2_2[y];
+  real beta3_2[y];
+  
+  real<lower = 0> phi1[y];
+  real<lower = 0> phi2[y]; 
+  real<lower = 0> phi3[y]; 
   
   real alphamu;
   real betamu;
-  //real beta2mu;
+  real beta2mu;
   
   real<lower = 0> tausq0;
   real<lower = 0> tausq1;
-  //real<lower = 0> tausq2;
-  
+  real<lower = 0> tausq2;
 }
 
 model {
@@ -45,20 +48,27 @@ model {
           for(t in 1:y) { // years
             
             if(cp[t,j]!=999) { // in order to skip over NA's
-    //with quad
+    // // with quad
     // cp[t,j] ~ poisson(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2)); // unlogged size, under low growth conditions
     // 
     // cp[t,j] ~ poisson(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2)); // unlogged size, under avg growth conditions
     // 
     // cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2)); // unlogged size, under high growth conditions
+
+    // with quad, negative binomial
+    cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2),phi1[t]); // unlogged size, under low growth conditions
+
+    cp[t,j] ~ neg_binomial_2(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2),phi2[t]); // unlogged size, under avg growth conditions
+
+    cp[t,j] ~ neg_binomial_2(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2),phi3[t]); // unlogged size, under high growth conditions
+
+    // // with out quad, poisson
+    // cp[t,j] ~ poisson(exp(alpha1[t] + beta1[t]*Sz[t,j,1])); // unlogged size, under low growth conditions
     // 
-    // with out quad
-    cp[t,j] ~ poisson(exp(alpha1[t] + beta1[t]*Sz[t,j,1])); // unlogged size, under low growth conditions
-    
-    cp[t,j] ~ poisson(exp(alpha2[t] + beta2[t]*Sz[t,j,2])); // unlogged size, under avg growth conditions
-  
-    cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3])); // ungged size, under high growth conditions
-    
+    // cp[t,j] ~ poisson(exp(alpha2[t] + beta2[t]*Sz[t,j,2])); // unlogged size, under avg growth conditions
+    // 
+    // cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3])); // ungged size, under high growth conditions
+    // 
           }
             
        }
@@ -80,11 +90,15 @@ model {
   betamu ~ normal(1,10);
   tausq1 ~ normal(0,10)T[0,];
   
-  // beta1_2 ~ normal(beta2mu,tausq2);
-  // beta2_2 ~ normal(beta2mu,tausq2);
-  // beta3_2 ~ normal(beta2mu,tausq2);
-  // 
-  // beta2mu ~ normal(1,10);
-  // tausq2 ~ normal(0,10)T[0,];
-  // 
+  beta1_2 ~ normal(beta2mu,tausq2);
+  beta2_2 ~ normal(beta2mu,tausq2);
+  beta3_2 ~ normal(beta2mu,tausq2);
+
+  beta2mu ~ normal(1,10);
+  tausq2 ~ normal(0,10)T[0,];
+  
+  phi1 ~ cauchy(0,5);
+  phi2 ~ cauchy(0,5);
+  phi3 ~ cauchy(0,5);
+
   }
