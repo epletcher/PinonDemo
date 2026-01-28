@@ -97,8 +97,8 @@ model {
   beta2mu ~ normal(1,10);
   tausq2 ~ normal(0,10)T[0,];
   
-  phi1 ~ cauchy(0,5);
-  phi2 ~ cauchy(0,5);
-  phi3 ~ cauchy(0,5);
+  phi1 ~ inv_gamma(0.4, 0.3); // or cauchy(0,5), but this allows for negatives
+  phi2 ~ inv_gamma(0.4, 0.3);
+  phi3 ~ inv_gamma(0.4, 0.3);
 
   }
