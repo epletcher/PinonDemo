@@ -23,6 +23,9 @@ beta1_2 <- repro.params %>% select(starts_with('beta1_2[')) %>% as.matrix()
 beta2_2 <- repro.params %>% select(starts_with('beta2_2[')) %>% as.matrix()
 beta3_2 <- repro.params %>% select(starts_with('beta3_2[')) %>% as.matrix()
 
+phi1 <- repro.params %>% select('phi1') %>% as.matrix()
+phi2 <- repro.params %>% select('phi2') %>% as.matrix()
+phi3 <- repro.params %>% select('phi3') %>% as.matrix()
 
 # ------ generate preds -------
 # vector of Size_tmins for generating preds
@@ -36,15 +39,12 @@ hg.cone.pred <- array(NA,c(length(Sz.range),y,length(alpha3[,1])))
 for (k in 1:length(alpha1[,1])) {
   
   for(t in 1:y) {
-  # quad
-  # lg.cone.pred[,t,k] <- exp(alpha1[k,t] + beta1[k,t]*Sz.range + beta1_2[k,t]*Sz.range^2)
-  # mg.cone.pred[,t,k] <- exp(alpha2[k,t] + beta2[k,t]*Sz.range + beta2_2[k,t]*Sz.range^2)
-  # hg.cone.pred[,t,k] <- exp(alpha3[k,t] + beta3[k,t]*Sz.range + beta3_2[k,t]*Sz.range^2)
-  # no quad
-  lg.cone.pred[,t,k] <- exp(alpha1[k,t] + beta1[k,t]*Sz.range)
-  mg.cone.pred[,t,k] <- exp(alpha2[k,t] + beta2[k,t]*Sz.range)
-  hg.cone.pred[,t,k] <- exp(alpha3[k,t] + beta3[k,t]*Sz.range)
   
+  lg.cone.pred[,t,k] <- exp(alpha1[k,t] + beta1[k,t]*Sz.range + beta1_2[k,t]*Sz.range^2)
+  mg.cone.pred[,t,k] <- exp(alpha2[k,t] + beta2[k,t]*Sz.range + beta2_2[k,t]*Sz.range^2)
+  hg.cone.pred[,t,k] <- exp(alpha3[k,t] + beta3[k,t]*Sz.range + beta3_2[k,t]*Sz.range^2)
+
+
   }
   
 }
@@ -67,25 +67,15 @@ cp.lambda.hg <- array(NA,c(length(cp.obs[1,]),y,length(alpha1[,1])))
 for (k in 1:length(alpha1[,1])) {
   
   for(t in 1:y) {
-    # quad
-    # cp.yhat.lg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha1[k,t] + beta1[k,t]*Sz[t,,1] + beta1_2[k,t]*Sz[t,,1]^2))
-    # cp.lambda.lg[,t,k] <- exp(alpha1[k,t] + beta1[k,t]*Sz[t,,1] + beta1_2[k,t]*Sz[t,,1]^2)
-    # 
-    # cp.yhat.mg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha2[k,t] + beta2[k,t]*Sz[t,,2] + beta2_2[k,t]*Sz[t,,2]^2))
-    # cp.lambda.mg[,t,k] <- exp(alpha2[k,t] + beta2[k,t]*Sz[t,,2] + beta2_2[k,t]*Sz[t,,2]^2)
-    # 
-    # cp.yhat.hg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha3[k,t] + beta3[k,t]*Sz[t,,3] + beta3_2[k,t]*Sz[t,,3]^2))
-    # cp.lambda.hg[,t,k] <- exp(alpha3[k,t] + beta3[k,t]*Sz[t,,3] + beta3_2[k,t]*Sz[t,,3]^2)
-    
-    # no quad
-    cp.yhat.lg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha1[k,t]))
-    cp.lambda.lg[,t,k] <- exp(alpha1[k,t] + beta1[k,t]*Sz[t,,1])
-    
-    cp.yhat.mg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha2[k,t]))
-    cp.lambda.mg[,t,k] <- exp(alpha2[k,t] + beta2[k,t]*Sz[t,,2])
-    
-    cp.yhat.hg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha3[k,t] + beta3[k,t]*Sz[t,,3]))
-    cp.lambda.hg[,t,k] <- exp(alpha3[k,t] + beta3[k,t]*Sz[t,,3])
+    quad
+    cp.yhat.lg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha1[k,t] + beta1[k,t]*Sz[t,,1] + beta1_2[k,t]*Sz[t,,1]^2))
+    cp.lambda.lg[,t,k] <- exp(alpha1[k,t] + beta1[k,t]*Sz[t,,1] + beta1_2[k,t]*Sz[t,,1]^2)
+
+    cp.yhat.mg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha2[k,t] + beta2[k,t]*Sz[t,,2] + beta2_2[k,t]*Sz[t,,2]^2))
+    cp.lambda.mg[,t,k] <- exp(alpha2[k,t] + beta2[k,t]*Sz[t,,2] + beta2_2[k,t]*Sz[t,,2]^2)
+
+    cp.yhat.hg[,t,k] <- rpois(length(cp.obs[1,]), exp(alpha3[k,t] + beta3[k,t]*Sz[t,,3] + beta3_2[k,t]*Sz[t,,3]^2))
+    cp.lambda.hg[,t,k] <- exp(alpha3[k,t] + beta3[k,t]*Sz[t,,3] + beta3_2[k,t]*Sz[t,,3]^2)
     
   }
   

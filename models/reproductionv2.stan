@@ -28,9 +28,9 @@ parameters {
   real beta2_2[y];
   real beta3_2[y];
   
-  real<lower = 0> phi1[y];
-  real<lower = 0> phi2[y]; 
-  real<lower = 0> phi3[y]; 
+  real<lower = 0> phi1;
+  real<lower = 0> phi2; 
+  real<lower = 0> phi3; 
   
   real alphamu;
   real betamu;
@@ -56,19 +56,12 @@ model {
     // cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2)); // unlogged size, under high growth conditions
 
     // with quad, negative binomial
-    cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2),phi1[t]); // unlogged size, under low growth conditions
+    cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2),phi1); // unlogged size, under low growth conditions
 
-    cp[t,j] ~ neg_binomial_2(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2),phi2[t]); // unlogged size, under avg growth conditions
+    cp[t,j] ~ neg_binomial_2(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2),phi2); // unlogged size, under avg growth conditions
 
-    cp[t,j] ~ neg_binomial_2(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2),phi3[t]); // unlogged size, under high growth conditions
-
-    // // with out quad, poisson
-    // cp[t,j] ~ poisson(exp(alpha1[t] + beta1[t]*Sz[t,j,1])); // unlogged size, under low growth conditions
-    // 
-    // cp[t,j] ~ poisson(exp(alpha2[t] + beta2[t]*Sz[t,j,2])); // unlogged size, under avg growth conditions
-    // 
-    // cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3])); // ungged size, under high growth conditions
-    // 
+    cp[t,j] ~ neg_binomial_2(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2),phi3); // unlogged size, under high growth conditions
+    
           }
             
        }
