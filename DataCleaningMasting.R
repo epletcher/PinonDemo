@@ -102,7 +102,7 @@ reprodat %>%
 cols <- c('2018'='#225ea8','2020'='#CB79E1', '2024'='coral')
 
 reprodat %>% 
-  filter(Year > 1999) %>% # only look at mast years
+  filter(Year > 1998) %>% 
   mutate(Year = as.factor(Year)) %>%
   ggplot(aes(x = tree_height_2024, y = Fruit_Count)) +
   geom_point(aes(col = Year, group = Year), alpha = 0.6) +

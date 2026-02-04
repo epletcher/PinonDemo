@@ -23,7 +23,7 @@ reprodat <- read.csv("cleaned_cone_prod_data.csv") %>% filter(!is.na(tree_height
 # cp is cone production across trees and years [year,tree]
 cp.obs<-cp <- reprodat %>% 
   select(c(Fruit_Count,Year,Field_ID)) %>% 
-  filter(Year > 1999) %>% # remove 1997 and 1998, no cones produced by focal trees
+  filter(Year > 1998) %>% # remove 1997 and 1998, no cones produced by focal trees
   pivot_wider(names_from = Field_ID, values_from = Fruit_Count) %>%
   select(-Year) %>%
   as.matrix()
@@ -38,7 +38,7 @@ Sz.obs <- reprodat %>%
   rename(height = tree_height_2024) %>% 
   mutate(height = case_when(Year<2024 ~ NA, .default = height)) %>% # add NAs for previous that we need model/estimate height for
   select(c(Field_ID,height,Year)) %>%
-  filter(Year > 1999) %>% # remove 1997 and 1998, no cones produced by focal trees
+  filter(Year > 1998) %>% # remove 1997 and 1998, no cones produced by focal trees
   pivot_wider(names_from = Field_ID, values_from = height) %>%
   select(-Year) %>%
   as.matrix()
@@ -127,60 +127,32 @@ reprodata <- list(i=i,k=k,y=y,Sz=Sz,cp=cp) # year random effect
 
 # fit reproduction model
 
-## state space fitting
-# # set initial true size as the mean across param/process uncertainty values
-# start <- list(list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
-#               list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)),
-#               list("tsz"=apply(Sz, MARGIN = c(1,2), FUN = mean)))
-
-# options(mc.cores = parallel::detectCores())
-# reprofit1 <- stan(file='models/reproduction.stan', data=reprodata, init = start, chains=3, iter=1000, warmup=500) # increase iterations later but need to debug
-# 
-# reprofit1 
-# 
-# launch_shinystan(reprofit1)
-
-# ** issues, fitting latent 25 okay, but then bad for all other years, sigs trails off
-
 ## scenario based model fitting
-# with quad term
-# set initial true size as the mean across param/process uncertainty values
-# start <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y)),
-#               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y)),
-#               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y)))
+
+# w/ quad term, negative binomial
+# # set initial true size as the mean across param/process uncertainty values
+# start3 <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y), "phi1"=0.1, "phi2"=0.1, "phi3"=0.1),
+#                list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y), "phi1"=0.1, "phi2"=0.1, "phi3"=0.1),
+#                list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y), "phi1"=0.1, "phi2"=0.1, "phi3"=0.1))
 # 
 # options(mc.cores = parallel::detectCores())
-# reprofit2 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start, iter=3000, warmup=1500) # run for longer after i 
-# reprofit2
-# 
-# launch_shinystan(reprofit2)
-
-# save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_quad.RData")
-
-# w/o quad term
-# set initial true size as the mean across param/process uncertainty values
-# start2 <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y)),
-#               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y)),
-#               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y)))
-# 
-# options(mc.cores = parallel::detectCores())
-# reprofit3 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start2, iter=3000, warmup=1500) # run for longer after i 
+# reprofit3 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start3, iter=4000, warmup=2000, control=list(adapt_delta=0.99)) 
+# # adjusting adapt delta forces the sampler to take smaller steps when exploring parameter space
 # reprofit3
 # 
 # launch_shinystan(reprofit3)
-# 
-# save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_wo_quad.RData")
+# save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_negbinom_w1999.RData")
 
-# w/ quad term, negative binomial
+# w/o quad term, negative binomial
 # set initial true size as the mean across param/process uncertainty values
-start3 <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y), "phi1"=0.1, "phi2"=0.1, "phi3"=0.1),
-               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y), "phi1"=0.1, "phi2"=0.1, "phi3"=0.1),
-               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(1,y),"beta2"=rep(1,y),"beta3"=rep(1,y),"beta1_2"=rep(-.1,y),"beta2_2"=rep(-.1,y),"beta3_2"=rep(-.1,y), "phi1"=0.1, "phi2"=0.1, "phi3"=0.1))
+start3 <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"phi1"=0.1, "phi2"=0.1,"phi3"=0.1),
+               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"phi1"=0.1, "phi2"=0.1,"phi3"=0.1),
+               list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"phi1"=0.1, "phi2"=0.1,"phi3"=0.1))
 
 options(mc.cores = parallel::detectCores())
-reprofit3 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start3, iter=5000, warmup=2500) # run for longer after i 
+reprofit3 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start3, iter=6000, warmup=3000, control=list(adapt_delta=0.99)) 
+# adjusting adapt delta forces the sampler to take smaller steps when exploring parameter space
 reprofit3
 
 launch_shinystan(reprofit3)
-
-save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_negbinom.RData")
+save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_negbinom_w1999.RData")

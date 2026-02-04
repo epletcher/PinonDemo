@@ -24,9 +24,9 @@ parameters {
   real beta2[y];
   real beta3[y];
   
-  real beta1_2[y];
-  real beta2_2[y];
-  real beta3_2[y];
+  // real beta1_2[y];
+  // real beta2_2[y];
+  // real beta3_2[y];
   
   real<lower = 0> phi1;
   real<lower = 0> phi2; 
@@ -34,11 +34,11 @@ parameters {
   
   real alphamu;
   real betamu;
-  real beta2mu;
+  // real beta2mu;
   
   real<lower = 0> tausq0;
   real<lower = 0> tausq1;
-  real<lower = 0> tausq2;
+  // real<lower = 0> tausq2;
 }
 
 model {
@@ -48,19 +48,20 @@ model {
           for(t in 1:y) { // years
             
             if(cp[t,j]!=999) { // in order to skip over NA's
-    // // with quad
-    // cp[t,j] ~ poisson(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2)); // unlogged size, under low growth conditions
+  
+    // // with quad, negative binomial
+    // cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2),phi1); // unlogged size, under low growth conditions
     // 
-    // cp[t,j] ~ poisson(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2)); // unlogged size, under avg growth conditions
+    // cp[t,j] ~ neg_binomial_2(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2),phi2); // unlogged size, under avg growth conditions
     // 
-    // cp[t,j] ~ poisson(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2)); // unlogged size, under high growth conditions
+    // cp[t,j] ~ neg_binomial_2(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2),phi3); // unlogged size, under high growth conditions
+    //  
+    // without quad, negative binomial
+    cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1]),phi1); // unlogged size, under low growth conditions
 
-    // with quad, negative binomial
-    cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2),phi1); // unlogged size, under low growth conditions
+    cp[t,j] ~ neg_binomial_2(exp(alpha2[t] + beta2[t]*Sz[t,j,2]),phi2); // unlogged size, under avg growth conditions
 
-    cp[t,j] ~ neg_binomial_2(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2),phi2); // unlogged size, under avg growth conditions
-
-    cp[t,j] ~ neg_binomial_2(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2),phi3); // unlogged size, under high growth conditions
+    cp[t,j] ~ neg_binomial_2(exp(alpha3[t] + beta3[t]*Sz[t,j,3]),phi3); // unlogged size, under high growth conditions
     
           }
             
@@ -80,17 +81,17 @@ model {
   beta2 ~ normal(betamu,tausq1);
   beta3 ~ normal(betamu,tausq1);
   
-  betamu ~ normal(1,10);
+  betamu ~ normal(0,10);
   tausq1 ~ normal(0,10)T[0,];
   
-  beta1_2 ~ normal(beta2mu,tausq2);
-  beta2_2 ~ normal(beta2mu,tausq2);
-  beta3_2 ~ normal(beta2mu,tausq2);
+  // beta1_2 ~ normal(beta2mu,tausq2);
+  // beta2_2 ~ normal(beta2mu,tausq2);
+  // beta3_2 ~ normal(beta2mu,tausq2);
 
-  beta2mu ~ normal(1,10);
-  tausq2 ~ normal(0,10)T[0,];
-  
-  phi1 ~ inv_gamma(0.4, 0.3); // or cauchy(0,5), but this allows for negatives
+  // beta2mu ~ normal(0,10);
+  // tausq2 ~ normal(0,10)T[0,];
+  // 
+  phi1 ~ inv_gamma(0.4, 0.3); // inv_gamma(0.4, 0.3) or cauchy(0,5), but this allows for negatives
   phi2 ~ inv_gamma(0.4, 0.3);
   phi3 ~ inv_gamma(0.4, 0.3);
 
