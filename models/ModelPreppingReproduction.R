@@ -145,14 +145,14 @@ reprodata <- list(i=i,k=k,y=y,Sz=Sz,cp=cp) # year random effect
 
 # w/o quad term, negative binomial
 # set initial true size as the mean across param/process uncertainty values
-start3 <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"phi1"=0.1, "phi2"=0.1,"phi3"=0.1),
+start4 <- list(list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"phi1"=0.1, "phi2"=0.1,"phi3"=0.1),
                list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"phi1"=0.1, "phi2"=0.1,"phi3"=0.1),
                list("alpha1"=rep(0.01,y),"alpha2"=rep(0.01,y),"alpha3"=rep(0.01,y),"beta1"=rep(0.5,y),"beta2"=rep(0.5,y),"beta3"=rep(0.5,y),"phi1"=0.1, "phi2"=0.1,"phi3"=0.1))
 
 options(mc.cores = parallel::detectCores())
-reprofit3 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start3, iter=6000, warmup=3000, control=list(adapt_delta=0.99)) 
+reprofit4 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, init=start3, iter=6000, warmup=3000, control=list(adapt_delta=0.99)) 
 # adjusting adapt delta forces the sampler to take smaller steps when exploring parameter space
-reprofit3
+reprofit4
 
-launch_shinystan(reprofit3)
-save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_negbinom_w1999.RData")
+launch_shinystan(reprofit4)
+save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_negbinom_woquad.RData")

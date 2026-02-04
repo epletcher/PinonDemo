@@ -49,13 +49,6 @@ model {
             
             if(cp[t,j]!=999) { // in order to skip over NA's
   
-    // // with quad, negative binomial
-    // cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1] + beta1_2[t]*Sz[t,j,1]^2),phi1); // unlogged size, under low growth conditions
-    // 
-    // cp[t,j] ~ neg_binomial_2(exp(alpha2[t] + beta2[t]*Sz[t,j,2] + beta2_2[t]*Sz[t,j,2]^2),phi2); // unlogged size, under avg growth conditions
-    // 
-    // cp[t,j] ~ neg_binomial_2(exp(alpha3[t] + beta3[t]*Sz[t,j,3] + beta3_2[t]*Sz[t,j,3]^2),phi3); // unlogged size, under high growth conditions
-    //  
     // without quad, negative binomial
     cp[t,j] ~ neg_binomial_2(exp(alpha1[t] + beta1[t]*Sz[t,j,1]),phi1); // unlogged size, under low growth conditions
 
