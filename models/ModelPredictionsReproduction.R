@@ -83,7 +83,7 @@ for (k in 1:length(alpha1[,1])) {
 ## --- Calculate bayesian p value using DEVIANCE ---
 
 # ** try runnning ppc separately for each year **
-yy = 1 # index years here
+yy = 2 # index years here
 #yy = 1:26 # for all years
 
 # low growth
