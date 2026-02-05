@@ -11,10 +11,6 @@ demo.data <- read.csv("cleaned_demo_data.csv")
 
 ## EXTRA DATA CLEAN UP
 
-# not removing this anymore b/c height data is fine
-# # remove outlier (just removing entire tree's row for now)
-# demo.data <- demo.data[-which(demo.data$CanDiam2==22.40),]
-
 # remove tree that is not in the plot (size only measured for one year)
 demo.data <- demo.data[-which(demo.data$raw.data.TreeID=="PJControl . Left . 72 . 35"),]
 

@@ -9,16 +9,11 @@ data {
 
 // The parameters accepted by the model. Our model
 parameters {
-  // real beta0[y]; // year effect
-  // real beta1[y]; // year effect
+
   real beta0; // w/o year effect
   real beta1; // w/o year effect
   real<lower = 0> sigp;
   real<lower = 0> sigo;
-  // real beta0mu;
-  // real beta1mu;
-  // real<lower = 0> tausq0;
-  // real<lower = 0> tausq1;
   
   matrix[y,i] Szl; //latent size at t
   
@@ -34,8 +29,6 @@ for(j in 1:i) {
 
         Szl[t,j] ~ normal(beta0 + beta1*Szl[t-1,j], sigp); // w/o year effect, NA/999 values will be kind of crazy b/c we arent removing them here //remove log here
         
-        // Szl[t,j] ~ normal(beta0[t] + beta1[t]*Szl[t-1,j], sigp); // w/ year effect
-        
         if(Sz[t,j]!=999) { // in order to skip over NA's, only need to do this for the data model
         
         Sz[t,j] ~ normal(exp(Szl[t,j]), sigo); //exponentiate here
@@ -48,13 +41,8 @@ for(j in 1:i) {
   //Prior
   beta0 ~ normal(0,10); 
   beta1 ~ normal(1,10); 
-  sigp ~ normal(0.05,.001) T[0,]; //  informative prior based on biologically reasonable annual growth (need to try constraining more, tried 1, then 0.1, now 0.01, now 0.001)
+  sigp ~ normal(0.05,.001) T[0,]; //  informative prior based on biologically reasonable annual growth 
   sigo ~ inv_gamma(1,1); 
   
-  // hyper priors
-  // beta0mu ~ normal(0,10);
-  // beta1mu ~ normal(1,10);
-  // tausq0 ~ inv_gamma(1,1);
-  // tausq1 ~ inv_gamma(1,1);
   }
   
