@@ -1,4 +1,4 @@
-# This folder contains csv with posterior estimates for all 3 demographic models (survival, growth, and reproduction). These parameter estimates are extracted and saved to this folder in each respective 'ModelPredictions.R' script
+# This folder contains csv with posterior estimates for all 3 demographic models (survival, growth, and reproduction). These parameter estimates are extracted and saved to this folder in each respective 'ModelPredictions*.R' script
 
 survival - a model of survival (dead or alive) in the current year based on size (height) in the previous year
 

@@ -7,7 +7,7 @@ library(abind) # for combining arrays
 ## set working directory to 'PinonDemo' folder/repository
 
 ## load model fitting workspace generated from 'ModelPreppingGrowth'
-# contains the fit ss growth model 'PinonDemo/models/growth_years_statespace.stan'
+# contains the fit ss growth model 'PinonDemo/demo_models/growth_years_statespace.stan'
 # for Bob and Elise this is located here: 
 # SEV_PJ_Demo/model_output_workspaces/growth_statespace_model.RData
 
