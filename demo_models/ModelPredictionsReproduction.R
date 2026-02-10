@@ -185,19 +185,19 @@ for(t in 1:y) {
 
 for(t in 1:y) {
   
-  hist(musim.repro.lg[y], col=rgb(1,0,0,1/4))
-  abline(v = quantile(musim.repro.lg[y], probs = c(0.05, 0.95)),
+  hist(musim.repro.lg[y,], col=rgb(1,0,0,1/4))
+  abline(v = quantile(musim.repro.lg[y,], probs = c(0.05, 0.95)),
          col = "red", lwd = 2)
-  abline(v = muobs.repro[y], col='blue', lwd = 2)  # blue
+  abline(v = muobs.repro[y,], col='blue', lwd = 2)  # blue
   
-  hist(musim.repro.mg[y], col=rgb(1,0,0,1/4))
-  abline(v = quantile(musim.repro.mg[y], probs = c(0.05, 0.95)),
+  hist(musim.repro.mg[y,], col=rgb(1,0,0,1/4))
+  abline(v = quantile(musim.repro.mg[y,], probs = c(0.05, 0.95)),
          col = "red", lwd = 2)
-  abline(v = muobs.repro[y], col='blue', lwd = 2)  # blue
+  abline(v = muobs.repro[y,], col='blue', lwd = 2)  # blue
   
-  hist(musim.repro.hg[y], col=rgb(1,0,0,1/4))
-  abline(v = quantile(musim.repro.hg[y], probs = c(0.05, 0.95)),
+  hist(musim.repro.hg[y,], col=rgb(1,0,0,1/4))
+  abline(v = quantile(musim.repro.hg[y,], probs = c(0.05, 0.95)),
          col = "red", lwd = 2)
-  abline(v = muobs.repro[y], col='blue', lwd = 2)  # blue
+  abline(v = muobs.repro[y,], col='blue', lwd = 2)  # blue
   
 }
