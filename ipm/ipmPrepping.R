@@ -34,4 +34,4 @@ latent.size <- readRDS("demo_models/posterior_estimates/latent_size_growth_w_nas
 # reproductons
 # predicts reproduction in the current year based on 'estimated' height in the *current year* (under 3 different growth scenarios)
 # cone_count[t,j,growth_scenario] ~ nbinom(exp(alphax + betax + currentyearheight(estimated)[t,j,x], phix))
-repro.params <- readRDS(repro.params, "demo_models/posterior_estimates/repro_params.rds")
+repro.params <- readRDS("demo_models/posterior_estimates/repro_params.rds")
