@@ -11,6 +11,8 @@ library(shinystan)
 repro.params <- 
   as.matrix(reprofit3) %>% as.data.frame()
 
+saveRDS(repro.params, "demo_models/posterior_estimates/repro_params.rds")
+
 ## Convert alpha's and beta's from reproduction models into matrices
 alpha1 <- repro.params %>% select(starts_with('alpha1[')) %>% as.matrix()
 alpha2 <- repro.params %>% select(starts_with('alpha2[')) %>% as.matrix()

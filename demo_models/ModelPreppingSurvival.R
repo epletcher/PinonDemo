@@ -79,7 +79,7 @@ survdata <- list(i = i, y = y, Surv = Surv, Stmin2 = Stmin2)
 #start <- list() # specify starting values, if needed
 
 # fit growth model
-survivalfit1 <- stan(file='models/survival.stan', data=survdata, chains=3, iter=3000, warmup=1500)
+survivalfit1 <- stan(file='demo_models/survival.stan', data=survdata, chains=3, iter=3000, warmup=1500)
 
 
 # ------- Inspect model outputs --------
@@ -108,3 +108,6 @@ survival.params <-
 
 ## save model worksapce
 #save.image(file = "your-file-path-here/growth_surv_model_outputs.RData")
+
+## save posterior estimates to repository
+saveRDS(survival.params, file = "demo_models/posterior_estimates/survival_params.rds")

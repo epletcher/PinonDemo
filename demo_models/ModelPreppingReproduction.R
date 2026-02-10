@@ -103,12 +103,17 @@ Sz.obs.p3 <- abind(Sz.obs.upci, Sz.obs.avg, Sz.obs.loci, along = 3)
 #a single tree example, low mean and hi growth, all years
 matplot(Sz.obs.p3[,15,], type = "l", lty = 1 , xlab = 'year', ylab = 'height (m)', col = c("dodgerblue", "black", "coral")) 
 
+#all trees loci
+matplot(Sz.obs.p3[,,1], type = "l", lty = 1 , xlab = 'year', ylab = 'height (m)')
 #all trees mean
 matplot(Sz.obs.p3[,,2], type = "l", lty = 1 , xlab = 'year', ylab = 'height (m)')
+#all trees upci
+matplot(Sz.obs.p3[,,3], type = "l", lty = 1 , xlab = 'year', ylab = 'height (m)')
 
 #
 Sz <- Sz.obs.p3 # for scenarios based model, mode SZ w/o log scale for now
 
+saveRDS(Sz.obs.p3, "demo_models/posterior_estimates/estimated_mastingtree_sizes_loci_mean_upci.rds")
 # ------- FIT REPRODUCTION MODEL IN STAN -----
 ## prep size data for STAN
 
@@ -155,4 +160,4 @@ reprofit4 <- stan(file='models/reproductionv2.stan', data=reprodata, chains=3, i
 reprofit4
 
 launch_shinystan(reprofit4)
-save.image("G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/reproduction_negbinom_woquad.RData")
+# save.image("LOCALFILEPATH/model_output_workspaces/reproduction_negbinom_woquad.RData")

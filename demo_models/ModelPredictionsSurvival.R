@@ -107,7 +107,7 @@ for(k in 1:length(survival.params$`beta0[1]`)) {
   
 }
 # between 0.1 and 0.9 indicates our model does a good job of capturing the distribution of the observed data in our model
-pval/length(growth.params$`beta0[1]`)
+pval/length(survival.params$`beta0[1]`)
 
 hist(devobs.surv, col=rgb(0,0,1,1/4), xlim=c(400,1000))  
 hist(devsim.surv, col=rgb(1,0,0,1/4), xlim=c(400,1000), add=T)  
@@ -145,7 +145,7 @@ surv.plot.dat <- left_join(med.surv.dat, low.surv.dat) %>%
   mutate(years = as.factor(years))
 
 ## plot
-tiff("figures/survival_plotted.tif",width = 7,height=6,units="in", res=300)
+# tiff("figures/survival_plotted.tif",width = 7,height=6,units="in", res=300)
 
 # cols
 cols <- c('2013'='#c7e9b9','2014'='#ADCC3C','2015'='#7fcdbb','2016'='#41b6c4','2017'='#1d91c0','2018'='#225ea8','2019'='#253494','2022'='black')
@@ -167,5 +167,5 @@ surv.plot.dat %>%
     panel.grid.major = element_line(colour = "lightgrey", linewidth = .4)
       )
   
-dev.off()
+# dev.off()
 

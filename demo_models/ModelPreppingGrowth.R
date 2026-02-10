@@ -148,4 +148,4 @@ growth_ss
 launch_shinystan(growth_ss)
 
 # save workspace to google drive 
-save.image(file = "G:/.shortcut-targets-by-id/1cGvc8VT3uIwM5NtkFk0RLP-xj4tptJAg/SEV_PJ_Demo/model_output_workspaces/growth_statespace_model.RData")
+# save.image(file = "LOCALFILEPATH/growth_statespace_model.RData")

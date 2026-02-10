@@ -16,6 +16,8 @@ library(shinystan)
 growth.params.ss <- 
   as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.frame()
 
+saveRDS(growth.params.ss, file = "demo_models/posterior_estimates/growth_params.rds")
+
 Szl <- rstan::extract(growth_ss, pars = 'Szl')[[1]] # latent sizes
 
 ## Re-assign NA's to any latent values outside of the census endpoints
@@ -30,6 +32,7 @@ for(i in 1:length(tcy[,1])) { # for every tree
   
 }
 
+saveRDS(Szl.filt,"demo_models/posterior_estimates/latent_size_growth_w_nas.rds")
 ## extract median and upper and lower cis for the latent state (for plotting)
 
 med.Szl <- apply(Szl.filt, MARGIN = c(2,3), FUN = median)
