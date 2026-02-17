@@ -15,6 +15,17 @@ Sz.est.p3 <- readRDS("demo_models/posterior_estimates/estimated_mastingtree_size
 # observed masting heights
 hist(Sz.est.p3)
 
+# ---- year mapping ----
+
+# years for survival model, here 'year' refers to the year that survival is predicted for based on size in the previous year
+surv.years <- data.frame(cal.year = c(2013:2019,2022), surv.mod.yr = c(1:8))
+
+# years for reproduction model, here 'year' 
+repro.years <- data.frame(cal.year = c(1999:2024), repro.mod.yr = c(1:26))
+
+# matching years across ipms
+demo.years <- repro.years %>% full_join(., surv.years)
+
 # ---- model parameters ----
 
 ## load parameters from survival, growth, and reproduction models
@@ -35,3 +46,4 @@ latent.size <- readRDS("demo_models/posterior_estimates/latent_size_growth_w_nas
 # predicts reproduction in the current year based on 'estimated' height in the *current year* (under 3 different growth scenarios)
 # cone_count[t,j,growth_scenario] ~ nbinom(exp(alphax + betax + currentyearheight(estimated)[t,j,x], phix))
 repro.params <- readRDS("demo_models/posterior_estimates/repro_params.rds")
+
