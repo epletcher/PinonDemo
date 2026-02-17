@@ -23,7 +23,7 @@ surv.years <- data.frame(cal.year = c(2013:2019,2022), surv.mod.yr = c(1:8))
 # years for reproduction model, here 'year' 
 repro.years <- data.frame(cal.year = c(1999:2024), repro.mod.yr = c(1:26))
 
-# matching years across ipms
+# matching years across demo models
 demo.years <- repro.years %>% full_join(., surv.years)
 
 # ---- model parameters ----
