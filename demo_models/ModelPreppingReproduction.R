@@ -94,7 +94,7 @@ Sz.obs.loci <- apply(Sz.obs.p, MARGIN = c(1,2), FUN = quantile, 0.05, na.rm = T)
 # mean growth CI / average growth scenario
 Sz.obs.avg <- apply(Sz.obs.p, MARGIN = c(1,2), FUN = mean, na.rm = T)
 
-# hi growth CI / low growth scenario
+# hi CI / low growth scenario
 Sz.obs.upci <- apply(Sz.obs.p, MARGIN = c(1,2), FUN = quantile, 0.95, na.rm = T)
 
 # combine
