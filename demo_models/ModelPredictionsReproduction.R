@@ -9,7 +9,7 @@ library(shinystan)
 
 ## extract reproduction model params from fit model
 repro.params <- 
-  as.matrix(reprofit3) %>% as.data.frame()
+  as.matrix(reprofit4) %>% as.data.frame()
 
 saveRDS(repro.params, "demo_models/posterior_estimates/repro_params.rds")
 
