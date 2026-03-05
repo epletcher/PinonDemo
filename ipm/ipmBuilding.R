@@ -75,7 +75,7 @@ MakeIPM<-function(repro,cone2seed, seed2seedling) {
   
   
   for (i in (1:NIter)) {
-    
+   
     #storage to create growth matrix
     growth<-matrix(NA,length(MSz),length(MSz))
     #Growth loop fill in differencing cumulative norm (a la Doak)
@@ -86,7 +86,7 @@ MakeIPM<-function(repro,cone2seed, seed2seedling) {
       
     } 
     #loop over years for surival and repro
-    for (t in c((14:20),23)) {
+    for (t in c((15:21),24)) { # ** i adjusted the indexing here up one, i doubled check thats right, but confirm w bob
       #match with correct year in dataset 
       st<-demo.years$surv.mod.yr[t]
       rt<-demo.years$repro.mod.yr[t]
