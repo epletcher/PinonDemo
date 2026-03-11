@@ -86,9 +86,9 @@ MakeIPM<-function(repro,cone2seed, seed2seedling) {
       
     } 
     #loop over years for surival and repro
-    for (t in c((15:21),24)) { # ** i adjusted the indexing here up one, i doubled check thats right, but confirm w bob
+    for (t in c((14:20),23)) { 
       #match with correct year in dataset 
-      st<-demo.years$surv.mod.yr[t]
+      st<-demo.years$surv.mod.yr[t+1]
       rt<-demo.years$repro.mod.yr[t]
       
       SurvVec<-inv.logit(survival.params[i,st]+survival.params[i,8+st]*log(MSz)) # probability of survival, plus 8 here is just to index past the beta0s
@@ -114,11 +114,11 @@ MakeIPM<-function(repro,cone2seed, seed2seedling) {
   
 }
 
-
+## test some values
 test <- MakeIPM(repro="mean",cone2seed=10, seed2seedling=0.01)
 test2 <- MakeIPM(repro="mean",cone2seed=10, seed2seedling=0.5)
 
-hist(test1)
+hist(test)
 hist(test2)
 
 
