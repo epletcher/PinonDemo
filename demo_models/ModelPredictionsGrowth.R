@@ -217,13 +217,14 @@ Sz.range.mat <- matrix(NA,10,length(Sz.range))
 Sz.range.mat[1,]<-Sz.range
 
 # iterating over ten years, but only going to plot predictions for growth from tmin1 to t
-Sz.range.p <- replicate(length(gp$beta0), Sz.range.mat)
+Sz.range.p <- replicate(length(growth.params.ss$beta0), Sz.range.mat)
 
-for (i in 1:length(gp$beta0)) {
+for (i in 1:length(growth.params.ss$beta0)) {
   
-  for(t in 2:dim(Sz.range.mat)[1]) { 
+  for(t in 2:dim(Sz.range.mat)[1]) {
     
-    Sz.range.p[t,,i] <- exp(rnorm(dim(Sz.range.p)[2], (log(Sz.range.p[t-1,,i])-gp$beta0[i])/gp$beta1[i], gp$sigp[i])) 
+    Sz.range.p[t,,i] <- exp(rnorm(dim(Sz.range.p)[2], growth.params.ss$beta0[i]+log(Sz.range.p[t-1,,i])*growth.params.ss$beta1[i], growth.params.ss$sigp[i])) 
+    
   }
   
 }
@@ -258,8 +259,8 @@ tiff("demo_models/figures/growth_plotted.tif",width = 5.5,height=6,units="in", r
 
 growth.plot.dat %>% 
   ggplot(aes(x = tmn1, y = med_t)) +
-  geom_ribbon(aes(ymin = lo_t, ymax = up_t), alpha = 0.3, fill = '#41b6c4') + 
-  geom_line(lwd = 1.25, col = '#41b6c4') +
+  geom_ribbon(aes(ymin = lo_t, ymax = up_t), alpha = 0.3, fill = '#FF0088') + 
+  geom_line(lwd = 1.25, col = '#FF0088') +
   labs(x = "size at t-1 (height in meters)", y = "size at t (height in meters)") +
   geom_abline(intercept = 0, slope = 1, lty = 2) +
   theme(
