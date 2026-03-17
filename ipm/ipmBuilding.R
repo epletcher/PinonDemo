@@ -119,6 +119,6 @@ test <- MakeIPM(repro="mean",cone2seed=10, seed2seedling=0.01)
 test2 <- MakeIPM(repro="mean",cone2seed=5, seed2seedling=0.01)
 
 hist(test)
-hist(test2)
+hist(test2, xlab=expression(lambda), main = 'stochastic lambda (w/ uncertainty)')
 
 
