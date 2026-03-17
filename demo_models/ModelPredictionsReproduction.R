@@ -242,11 +242,11 @@ cone.plot.dat <- med.cone.dat %>%
 tiff("demo_models/figures/reproduction_plotted.tif",width = 7,height=6,units="in", res=300)
 
 # cols
-cols <- c('2013'='#c7e9b9','2014'='#ADCC3C','2015'='#7fcdbb','2016'='#41b6c4','2017'='#1d91c0','2018'='#225ea8','2019'='#253494','2022'='black')
+cols <- c('2012'='#c7e9b9','2013'='#ADCC3C','2014'='#7fcdbb','2015'='#41b6c4','2016'='#1d91c0','2017'='#225ea8','2018'='#253494','2021'='black')
 
 # ** also filter reproduction data to only years we have the survival data for
 cone.plot.dat %>% 
-  filter(years%in%c(2013:)) %>%
+  filter(years%in%c(as.character(2012:2018),'2021')) %>%
   ggplot(aes(x = size, y = med.cone)) +
   geom_ribbon(aes(ymin = low.cone, ymax = up.cone, group = years, fill = years), 
               alpha=0.2) +
