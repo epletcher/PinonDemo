@@ -16,7 +16,7 @@ library(shinystan)
 growth.params.ss <- 
   as.matrix(growth_ss, pars = c("beta0","beta1","sigp","sigo")) %>% as.data.frame()
 
-saveRDS(growth.params.ss, file = "demo_models/posterior_estimates/growth_params.rds")
+# saveRDS(growth.params.ss, file = "demo_models/posterior_estimates/growth_params.rds")
 
 Szl <- rstan::extract(growth_ss, pars = 'Szl')[[1]] # latent sizes
 
@@ -32,7 +32,7 @@ for(i in 1:length(tcy[,1])) { # for every tree
   
 }
 
-saveRDS(Szl.filt,"demo_models/posterior_estimates/latent_size_growth_w_nas.rds")
+# saveRDS(Szl.filt,"demo_models/posterior_estimates/latent_size_growth_w_nas.rds")
 ## extract median and upper and lower cis for the latent state (for plotting)
 
 med.Szl <- apply(Szl.filt, MARGIN = c(2,3), FUN = median)
@@ -68,53 +68,32 @@ lines(exp(hi.Szl[,3]), lty = 2, col = 'purple')
 
 #
 # ------- GENERATE PREDICITONS ---------
-# 
-# # Use latent states from fit model as size at t-1
-# # Generate predictions for year effect growth model
-# # (no year effect)
-# 
-# # empty array for predictions
-# Sz.pred <- array(NA,c(dim(Szl.filt)[1],dim(Szl.filt)[2],dim(Szl.filt)[3]))
-# 
-# # loop over iterations, and through years
-# # ** process error is not propagaed in this current form, latent size at t-1 is used each year to predict size the next year, not the new predictions
-# for(k in 1:dim(Szl.filt)[1]) {
-#   
-#   for(t in 2:dim(Szl.filt)[2]) { 
-#     
-#     # using latent size at t-1, and sigp to generate predictions here
-#     Sz.pred[k,t,] <- rnorm(dim(Szl.filt)[3], exp(growth.params.ss$beta0[k] + growth.params.ss$beta1[k]*Szl.filt[k,t-1,]), growth.params.ss$sigp[k]) # eponentiate
-#     
-#   }
-#   
-# }
-# 
-# # credible intervals and median predictions for plottting
-# med.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = median)
-# lo.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.05, na.rm = T)
-# hi.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.95, na.rm = T)
-#  
-#
-# ----------- PLOT PREDICTIONS -----------
-# 
-# # plot predictions against latent states
-# plot(Sz.pred[50,,],exp(Szl.filt[50,,])) # picking a random iteration
-# 
-# # plot predictions on top of observed sizes for a handful of trees
-# plot(Sz.obs[,1], ylim = c(0,7), pch = 16)
-# lines(med.Sz[,1])
-# lines(lo.Sz[,1], lty = 2)
-# lines(hi.Sz[,1], lty = 2)
-# points(Sz.obs[,26], col = 'coral', pch = 16)
-# lines(med.Sz[,26], col = 'coral')
-# lines(lo.Sz[,26], lty = 2, col = 'coral')
-# lines(hi.Sz[,26], lty = 2, col = 'coral')
-# points(Sz.obs[,3], col = 'purple', pch = 16)
-# lines(med.Sz[,3], col = 'purple')
-# lines(lo.Sz[,3], lty = 2, col = 'purple')
-# lines(hi.Sz[,3], lty = 2, col = 'purple')
 
-#
+# Use latent states from fit model as size at t-1
+# Generate predictions for year effect growth model
+# (no year effect)
+
+# empty array for predictions
+Sz.pred <- array(NA,c(dim(Szl.filt)[1],dim(Szl.filt)[2],dim(Szl.filt)[3]))
+
+# loop over iterations, and through years
+# ** process error is not propagaed in this current form, latent size at t-1 is used each year to predict size the next year, not the new predictions
+for(k in 1:dim(Szl.filt)[1]) {
+
+  for(t in 2:dim(Szl.filt)[2]) {
+
+    # using latent size at t-1, and sigp to generate predictions here
+    Sz.pred[k,t,] <- rnorm(dim(Szl.filt)[3], exp(growth.params.ss$beta0[k] + growth.params.ss$beta1[k]*Szl.filt[k,t-1,]), growth.params.ss$sigp[k]) # eponentiate
+
+  }
+
+}
+
+# credible intervals and median predictions for plottting
+med.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = median)
+lo.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.05, na.rm = T)
+hi.Sz <- apply(Sz.pred, MARGIN = c(2,3), FUN = quantile, 0.95, na.rm = T)
+
 # --------- POSTERIOR PREDICTIVE CHECK -------------
 
 ## simulate fake data
@@ -227,4 +206,70 @@ hist(sdsim, col=rgb(1,0,0,1/4), main = 'red = sim. sd, blue = obs sd')  # red
 abline(v = quantile(sdsim, probs = c(0.05, 0.95)),
        col = "red", lwd = 2)
 abline(v = sdobs, col='blue', lwd = 2)  # blue
+
+# ------------ Plotting Growth (publication quality) ------------
+
+## instead of using latent states to make predictions, generate initial sizes based off range of size observed in the data
+
+# make a df for generating preds with range of sizes in the data
+Sz.range = seq(0.75,7,0.05)
+Sz.range.mat <- matrix(NA,10,length(Sz.range))
+Sz.range.mat[1,]<-Sz.range
+
+# iterating over ten years, but only going to plot predictions for growth from tmin1 to t
+Sz.range.p <- replicate(length(gp$beta0), Sz.range.mat)
+
+for (i in 1:length(gp$beta0)) {
+  
+  for(t in 2:dim(Sz.range.mat)[1]) { 
+    
+    Sz.range.p[t,,i] <- exp(rnorm(dim(Sz.range.p)[2], (log(Sz.range.p[t-1,,i])-gp$beta0[i])/gp$beta1[i], gp$sigp[i])) 
+  }
+  
+}
+
+## reformat growth model predicitons
+
+# median
+med.growth.dat <- t(apply(Sz.range.p, MARGIN = c(1,2), FUN = median)) %>% 
+  as.data.frame() %>% 
+  select(c('V1','V2')) %>%
+  rename(tmn1 = V1, med_t = V2) 
+
+# lower credible interval
+low.growth.dat <- t(apply(Sz.range.p, MARGIN = c(1,2), FUN = quantile, 0.05)) %>%
+  as.data.frame() %>%
+  select(c('V1','V2')) %>%
+  rename(tmn1 = V1, lo_t = V2)
+
+# upper credible interval
+up.growth.dat <- t(apply(Sz.range.p, MARGIN = c(1,2), FUN = quantile, 0.95)) %>%
+  as.data.frame() %>%
+  select(c('V1','V2')) %>%
+  rename(tmn1 = V1, up_t = V2) 
+
+# merge
+growth.plot.dat <- med.growth.dat %>%
+  left_join(., low.growth.dat) %>% 
+  left_join(., up.growth.dat) 
+
+## plot
+tiff("demo_models/figures/growth_plotted.tif",width = 5.5,height=6,units="in", res=300)
+
+growth.plot.dat %>% 
+  ggplot(aes(x = tmn1, y = med_t)) +
+  geom_ribbon(aes(ymin = lo_t, ymax = up_t), alpha = 0.3, fill = '#41b6c4') + 
+  geom_line(lwd = 1.25, col = '#41b6c4') +
+  labs(x = "size at t-1 (height in meters)", y = "size at t (height in meters)") +
+  geom_abline(intercept = 0, slope = 1, lty = 2) +
+  theme(
+    text = element_text(size = 22),
+    legend.key = element_rect(fill = "white"),
+    panel.background = element_rect(linetype = "solid",fill = NA),
+    panel.border = element_rect(linetype = "solid", fill = NA),
+    panel.grid.major = element_line(colour = "#F2F0EF", linewidth = .4)
+  )
+
+dev.off()
+
 

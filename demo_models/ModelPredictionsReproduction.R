@@ -11,7 +11,7 @@ library(shinystan)
 repro.params <- 
   as.matrix(reprofit4) %>% as.data.frame()
 
-saveRDS(repro.params, "demo_models/posterior_estimates/repro_params.rds")
+# saveRDS(repro.params, "demo_models/posterior_estimates/repro_params.rds")
 
 ## Convert alpha's and beta's from reproduction models into matrices
 alpha1 <- repro.params %>% select(starts_with('alpha1[')) %>% as.matrix()
@@ -203,3 +203,64 @@ for(t in 1:y) {
   abline(v = muobs.repro[y,], col='blue', lwd = 2)  # blue
   
 }
+# ------------ Plotting Reproduction (publication quality) ------------
+# named vector of years
+year.names <- as.character(c(1999:2024))
+
+# ** only plotting under mean growth scenario ** (switch 'mg' to 'hg' or 'lg' for other scenarios)
+
+## reformat model predictions
+
+# median
+med.cone.dat <- apply(mg.cone.pred, MARGIN = c(1,2), FUN = median) %>%
+  as.data.frame() %>%
+  `colnames<-`(year.names) %>%
+  add_column('size' = Sz.range) %>% # add the size column
+  pivot_longer('1999':'2024', names_to = 'years', values_to = 'med.cone') # pivot longer columns to years
+
+# lower credible interval
+lo.cone.dat <- apply(mg.cone.pred, MARGIN = c(1,2), FUN = quantile, 0.05) %>%
+  as.data.frame() %>%
+  `colnames<-`(year.names) %>%
+  add_column('size' = Sz.range) %>% # add the size column
+  pivot_longer('1999':'2024', names_to = 'years', values_to = 'low.cone') # pivot longer columns to years
+
+# upper credible interval
+up.cone.dat <- apply(mg.cone.pred, MARGIN = c(1,2), FUN = quantile, 0.95) %>%
+  as.data.frame() %>%
+  `colnames<-`(year.names) %>%
+  add_column('size' = Sz.range) %>% # add the size column
+  pivot_longer('1999':'2024', names_to = 'years', values_to = 'up.cone') # pivot longer columns to years
+
+# merge
+cone.plot.dat <- med.cone.dat %>%
+  left_join(., lo.cone.dat) %>% 
+  left_join(., up.cone.dat) %>% 
+  mutate(years = as.factor(years))
+
+## plot
+tiff("demo_models/figures/reproduction_plotted.tif",width = 7,height=6,units="in", res=300)
+
+# cols
+cols <- c('2013'='#c7e9b9','2014'='#ADCC3C','2015'='#7fcdbb','2016'='#41b6c4','2017'='#1d91c0','2018'='#225ea8','2019'='#253494','2022'='black')
+
+# ** also filter reproduction data to only years we have the survival data for
+cone.plot.dat %>% 
+  filter(years%in%c(2013:)) %>%
+  ggplot(aes(x = size, y = med.cone)) +
+  geom_ribbon(aes(ymin = low.cone, ymax = up.cone, group = years, fill = years), 
+              alpha=0.2) +
+  scale_color_manual(values = cols) +
+  scale_fill_manual(values = cols) +
+  geom_line(aes(group = years, col = years), lwd = 1.25) +
+  labs(x = "size at t (height in meters)", y = "annual cone production") +
+  theme(
+    text = element_text(size = 22),
+    legend.key = element_rect(fill = "white"),
+    panel.background = element_rect(linetype = "solid",fill = NA),
+    panel.border = element_rect(linetype = "solid", fill = NA),
+    panel.grid.major = element_line(colour = "#F2F0EF", linewidth = .4)
+  )
+
+dev.off()
+
