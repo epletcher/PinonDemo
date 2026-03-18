@@ -32,8 +32,9 @@ min(St[which(St!=999)])
 max(St[which(St!=999)]) # ~0-7 (height)
 
 # vector of Size_tmins for generating preds
-St.min.range <- seq(0.75,7,0.05)
-
+RSz <- exp(seq(-1.39,2,by=.01))
+NSz<-length(RSz)
+St.min.range <- (RSz[-NSz]+RSz[-1])/2 # same as medpoint of classes used fr the ipm
 
 # ------ Survival --------
 
@@ -141,14 +142,23 @@ up.surv.dat <- up.Surv.prob.range %>%
 
 # merge
 surv.plot.dat <- left_join(med.surv.dat, low.surv.dat) %>% 
-  left_join(., up.surv.dat) %>% 
+  left_join(., up.surv.dat) %>%
+  mutate(years = case_when(
+    years == "2013" ~ "2012-13",
+    years == "2014" ~ "2013-14",
+    years == "2015" ~ "2014-15",
+    years == "2016" ~ "2015-16",
+    years == "2017" ~ "2016-17",
+    years == "2018" ~ "2017-18",
+    years == "2019" ~ "2018-19",
+    years == "2022" ~ "2021-22")) %>%
   mutate(years = as.factor(years))
 
 ## plot
- tiff("figures/demo_models/survival_plotted.tif",width = 7,height=6,units="in", res=300)
+svg("demo_models/figures/survival_plotted.svg",width = 7.5,height=6)
 
 # cols
-cols <- c('2013'='#c7e9b9','2014'='#ADCC3C','2015'='#7fcdbb','2016'='#41b6c4','2017'='#1d91c0','2018'='#225ea8','2019'='#253494','2022'='black')
+cols <- c('2012-13'='#c7e9b9','2013-14'='#ADCC3C','2014-15'='#7fcdbb','2015-16'='#41b6c4','2016-17'='#1d91c0','2017-18'='#225ea8','2018-19'='#253494','2021-22'='black')
 
 
 surv.plot.dat %>% 
@@ -158,7 +168,7 @@ surv.plot.dat %>%
   scale_color_manual(values = cols) +
   scale_fill_manual(values = cols) +
   geom_line(aes(group = years, col = years), lwd = 1.25) +
-  labs(x = "size in previous year (height in meters)", y = "probability of survival") +
+  labs(x = "size (m)", y = "probability of survival") +
   theme(
     text = element_text(size = 22),
     legend.key = element_rect(fill = "white"),

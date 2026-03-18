@@ -212,7 +212,10 @@ abline(v = sdobs, col='blue', lwd = 2)  # blue
 ## instead of using latent states to make predictions, generate initial sizes based off range of size observed in the data
 
 # make a df for generating preds with range of sizes in the data
-Sz.range = seq(0.75,7,0.05)
+RSz <- exp(seq(-1.39,2,by=.01))
+NSz<-length(RSz)
+Sz.range = (RSz[-NSz]+RSz[-1])/2 # same as medpoint of classes used fr the ipm
+
 Sz.range.mat <- matrix(NA,10,length(Sz.range))
 Sz.range.mat[1,]<-Sz.range
 
@@ -255,13 +258,13 @@ growth.plot.dat <- med.growth.dat %>%
   left_join(., up.growth.dat) 
 
 ## plot
-tiff("demo_models/figures/growth_plotted.tif",width = 5.5,height=6,units="in", res=300)
+svg("demo_models/figures/growth_plotted.svg",width = 5.5,height=6)
 
 growth.plot.dat %>% 
   ggplot(aes(x = tmn1, y = med_t)) +
   geom_ribbon(aes(ymin = lo_t, ymax = up_t), alpha = 0.3, fill = '#FF0088') + 
   geom_line(lwd = 1.25, col = '#FF0088') +
-  labs(x = "size at t-1 (height in meters)", y = "size at t (height in meters)") +
+  labs(x = "size at t-1 (m)", y = "size at t (m)") +
   geom_abline(intercept = 0, slope = 1, lty = 2) +
   theme(
     text = element_text(size = 22),

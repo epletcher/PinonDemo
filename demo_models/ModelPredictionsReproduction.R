@@ -28,7 +28,9 @@ phi3 <- repro.params %>% select('phi3') %>% as.matrix()
 
 # ------ generate preds -------
 # vector of Size_tmins for generating preds
-Sz.range <- seq(1,8,0.5)
+RSz <- exp(seq(-1.39,2,by=.01))
+NSz<-length(RSz)
+Sz.range <- (RSz[-NSz]+RSz[-1])/2 # same as midpoint of classes used fr the ipm
 
 # preds
 lg.cone.pred <- array(NA,c(length(Sz.range),y,length(alpha1[,1])))
@@ -236,24 +238,34 @@ up.cone.dat <- apply(mg.cone.pred, MARGIN = c(1,2), FUN = quantile, 0.95) %>%
 cone.plot.dat <- med.cone.dat %>%
   left_join(., lo.cone.dat) %>% 
   left_join(., up.cone.dat) %>% 
+  filter(years%in%c(as.character(2012:2018),'2021')) %>%
+  mutate(years = case_when(
+    years == "2012" ~ "2012-13",
+    years == "2013" ~ "2013-14",
+    years == "2014" ~ "2014-15",
+    years == "2015" ~ "2015-16",
+    years == "2016" ~ "2016-17",
+    years == "2017" ~ "2017-18",
+    years == "2018" ~ "2018-19",
+    years == "2021" ~ "2021-22")) %>%
   mutate(years = as.factor(years))
 
 ## plot
-tiff("demo_models/figures/reproduction_plotted.tif",width = 7,height=6,units="in", res=300)
+svg("demo_models/figures/reproduction_plotted.svg",width = 7.5,height=6)
 
 # cols
-cols <- c('2012'='#c7e9b9','2013'='#ADCC3C','2014'='#7fcdbb','2015'='#41b6c4','2016'='#1d91c0','2017'='#225ea8','2018'='#253494','2021'='black')
+cols <- c('2012-13'='#c7e9b9','2013-14'='#ADCC3C','2014-15'='#7fcdbb','2015-16'='#41b6c4','2016-17'='#1d91c0','2017-18'='#225ea8','2018-19'='#253494','2021-22'='black')
+
 
 # ** also filter reproduction data to only years we have the survival data for
 cone.plot.dat %>% 
-  filter(years%in%c(as.character(2012:2018),'2021')) %>%
   ggplot(aes(x = size, y = med.cone)) +
   geom_ribbon(aes(ymin = low.cone, ymax = up.cone, group = years, fill = years), 
               alpha=0.2) +
   scale_color_manual(values = cols) +
   scale_fill_manual(values = cols) +
   geom_line(aes(group = years, col = years), lwd = 1.25) +
-  labs(x = "size at t (height in meters)", y = "annual cone production") +
+  labs(x = "size at t (m)", y = "annual cone production") +
   theme(
     text = element_text(size = 22),
     legend.key = element_rect(fill = "white"),
